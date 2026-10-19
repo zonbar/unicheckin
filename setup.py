@@ -2,12 +2,15 @@ import os
 
 from setuptools import find_packages, setup
 
+# 发行包名沿用 dailycheckin —— 引擎内部 27 处 import 都指向它，
+# 改名要动的地方多、收益低。项目的展示名与仓库地址见 README 与 compose。
 NAME = "dailycheckin"
 FOLDER = "dailycheckin"
-DESCRIPTION = "dailycheckin"
-EMAIL = "133397418@qq.com"
-AUTHOR = "Sitoi"
+DESCRIPTION = "签到聚合 + 网页管理面板"
+EMAIL = "zonbar@users.noreply.github.com"
+AUTHOR = "zonbar"
 REQUIRES_PYTHON = ">=3.9.0"
+URL = "https://github.com/zonbar/Uni-Check-in"
 VERSION = None
 
 
@@ -59,8 +62,13 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
-    url="https://sitoi.cn",
-    project_urls={"Documentation": "https://sitoi.github.io/dailycheckin/"},
+    url=URL,
+    project_urls={
+        "Source": URL,
+        "Issue": URL + "/issues",
+        # 引擎最初来自这里，代码沿用其 MIT 许可
+        "Engine origin": "https://github.com/Sitoi/dailycheckin",
+    },
     packages=find_packages(exclude=("config", "panel")),
     install_requires=REQUIRED,
     include_package_data=True,

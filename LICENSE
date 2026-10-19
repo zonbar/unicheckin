@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2021 Sitoi
+Copyright (c) 2025 zonbar (本项目新增部分：网页管理面板、微博超话签到等)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,4 +20,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+版权说明
+========
+
+签到引擎（``dailycheckin/`` 目录下各站点模块与 utils）最初来自
+https://github.com/Sitoi/dailycheckin ，MIT License，版权归原作者 Sitoi 所有。
+按 MIT 条款要求，其版权声明予以保留。
+
+本项目在此基础上新增的内容，版权归 zonbar 所有，同样以 MIT 发布：
+
+* 网页管理面板（``panel/`` 全部）
+* 微博超话签到（``dailycheckin/weibo/``）
+* Docker 编排与部署脚本
 

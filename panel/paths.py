@@ -37,12 +37,12 @@ PORT = int(_env("PANEL_PORT", "8080"))
 # 可选：给脚本 / 自动化用的静态口令。留空就只走「账号密码登录」，这是默认。
 TOKEN = _env("PANEL_TOKEN", "")
 # 页面标题（浏览器标签 + 顶栏品牌名）。想换成自己的叫法就设 PANEL_TITLE。
-TITLE = _env("PANEL_TITLE", "dailycheckin-plus")
+TITLE = _env("PANEL_TITLE", "Uni-Check-in")
 TZ = _env("TZ", "Asia/Shanghai")
 
 # 本项目的仓库地址（面板 = 这个仓库新增的部分）。页脚的链接、以及
 # 「容器要不要更新」的比对对象都是它。换成自己的 fork：设 PANEL_REPO=owner/name。
-PROJECT_REPO = _env("PANEL_REPO", "BeacherZ/dailycheckin-plus")
+PROJECT_REPO = _env("PANEL_REPO", "zonbar/Uni-Check-in")
 PROJECT_URL = "https://github.com/" + PROJECT_REPO
 
 MAX_BACKUPS = 30

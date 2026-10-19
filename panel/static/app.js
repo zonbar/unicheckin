@@ -1085,12 +1085,7 @@
       `面板版本   : ${st.panel.version}`,
       `引擎版本   : ${st.engine.version || "未知"}`,
       `引擎状态   : ${st.engine.ok ? "正常" : "异常"} — ${st.engine.message}`,
-      up.commit
-        ? `引擎来源   : ${up.repo} @ ${up.ref} · ${up.commit}${up.commit_date ? "（" + up.commit_date.slice(0, 10) + "）" : ""}`
-        : "引擎来源   : 未记录溯源信息",
-      up.synced_at
-        ? `同步于     : ${up.synced_at}${up.patches && up.patches.length ? " · 本地补丁 " + up.patches.length + " 个" : ""}`
-        : null,
+      up.self_hosted ? `签到站点   : ${up.sites || 0} 个（引擎为自有代码，不依赖外部同步）` : null,
       gaps.length ? `待补元数据 : ${gaps.join("、")}（可正常签到，只是没有必填字段提示与在线校验）` : null,
       `工作目录   : ${st.panel.home}`,
       `配置文件   : ${st.panel.config_path}`,

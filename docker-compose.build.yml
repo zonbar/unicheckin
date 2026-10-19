@@ -1,9 +1,10 @@
 # 从源码构建版（不走 ghcr.io 镜像）。
+# 什么时候用：想本地改完直接验证，或者镜像还没构建出来。
 # 用法：docker compose -f docker-compose.build.yml up -d --build
 services:
   dailycheckin:
     build: .
-    image: dailycheckin-plus:latest
+    image: uni-check-in:local
     container_name: dailycheckin
     restart: unless-stopped
     ports:

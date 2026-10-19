@@ -1,56 +1,50 @@
-"""读取 UPSTREAM.json —— 面板里「当前引擎是哪一版、什么时候同步的」就来自这里。
+"""引擎与项目版本信息 —— 面板「关于本项目」那块显示的就是这里。
 
-引擎源码是本项目内置的（见 tools/sync_upstream.py），所以「上游发新版了没有」
-这件事面板自己是不知道的；这里只负责把**同步那一刻记录下来的溯源信息**读出来，
-让用户至少能看到当前跑的是哪一版、基于上游哪个提交、带了哪些本地补丁。
+本项目的签到引擎是**自有代码**，不再从任何上游同步，因此没有「基于哪个上游
+提交」这种溯源信息可读。这里只报两样：我们自己的版本号（取自
+`dailycheckin/__version__.py`）和站点总数。
+
+原先这里读的是 `UPSTREAM.json`（同步上游引擎时落下的记录）；同步机制移除后
+那个文件已不存在，本模块改为直接从引擎读版本。
 """
 
 from __future__ import annotations
 
-import json
-import os
-
-from . import paths
-
-_CACHE: dict = {"mtime": None, "data": {}}
+__all__ = ["info", "version"]
 
 
-def _candidates() -> list:
-    # 容器里 UPSTREAM.json 和 panel/ 一起放在 DC_HOME；
-    # 本地开发时 DC_HOME 可能是临时目录，所以再退回项目根目录找一次。
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return [os.path.join(paths.HOME, "UPSTREAM.json"), os.path.join(root, "UPSTREAM.json")]
+def version() -> str:
+    """引擎/项目版本号。读不到时返回 'unknown'，不影响面板启动。"""
+    try:
+        from dailycheckin.__version__ import __version__
+
+        return str(__version__)
+    except Exception:  # noqa: BLE001 - 缺依赖时降级
+        pass
+    try:
+        import os
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        ver_file = os.path.join(os.path.dirname(here), "dailycheckin", "__version__.py")
+        with open(ver_file, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("__version__"):
+                    return line.split("=", 1)[1].strip().strip("\"'")
+    except Exception:  # noqa: BLE001
+        pass
+    return "unknown"
 
 
 def info() -> dict:
-    """返回归一化后的溯源信息；读不到就返回空字典（面板会降级显示）。"""
-    for path in _candidates():
-        try:
-            mtime = os.path.getmtime(path)
-        except OSError:
-            continue
-        if _CACHE["mtime"] == (path, mtime):
-            return _CACHE["data"]
-        try:
-            with open(path, encoding="utf-8") as f:
-                raw = json.load(f)
-        except (OSError, ValueError):
-            continue
-        if not isinstance(raw, dict) or not raw.get("commit"):
-            continue
-        data = {
-            "repo": raw.get("repo") or "",
-            "ref": raw.get("ref") or "",
-            "commit": (raw.get("commit") or "")[:10],
-            "commit_date": raw.get("commit_date") or "",
-            "version": raw.get("version") or "",
-            "synced_at": raw.get("synced_at") or "",
-            "patches": list(raw.get("patches") or []),
-            "sites": list(raw.get("engine_sites") or []),
-            "url": "https://github.com/%s" % raw["repo"] if raw.get("repo") else "",
-            "source": path,
-        }
-        _CACHE["mtime"] = (path, mtime)
-        _CACHE["data"] = data
-        return data
-    return {}
+    """返回归一化后的版本信息；任何异常都降级为空字典（面板会显示「未知」）。"""
+    try:
+        from . import catalog
+
+        sites = len(catalog.all_sites())
+    except Exception:  # noqa: BLE001
+        sites = 0
+    return {
+        "version": version(),
+        "sites": sites,
+        "self_hosted": True,
+    }
