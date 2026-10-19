@@ -19,16 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-致谢
-=====
-
-本项目的签到引擎最初改编自 `dailycheckin` 项目
-（https://github.com/Sitoi/dailycheckin，MIT License，版权归原作者 Sitoi 所有）。
-该项目的作者与原始许可声明在此致谢。
-
-本仓库为独立重写的实现，代码结构、模块划分与功能实现均已重构，
-与原项目不再保持同步。仓库中现存的代码版权归 zonbar 所有，按 MIT 发布。
-

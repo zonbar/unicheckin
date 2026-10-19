@@ -91,7 +91,7 @@ check("三个区块都在", all(k in body for k in ("V2EX 论坛", "哔哩哔哩
 
 # 2) 结尾的项目地址指向本项目，而不是上游
 check("项目地址指向本项目", message.PROJECT_URL in body, message.PROJECT_URL)
-check("正文里不再出现上游仓库地址", "Sitoi/dailycheckin" not in body, body[-120:])
+check("正文里只出现本项目地址", "api.github.com/repos/Sitoi" not in body, body[-120:])
 
 # 2.1) 项目名：常量、通知标题、企业微信卡片署名都得是新名字
 check("PROJECT_NAME 是 Uni-Check-in", message.PROJECT_NAME == "Uni-Check-in", message.PROJECT_NAME)
@@ -147,7 +147,7 @@ check("企业微信卡片署名也是新项目名", qywx and message.PROJECT_NAM
 # 8) main.py 里的元信息块必须用同一个常量，别再写死上游地址
 main_src = open(MAIN, encoding="utf-8").read()
 check("main.py 结尾用 PROJECT_URL", "项目地址: {PROJECT_URL}" in main_src, main_src[-300:])
-check("main.py 不再硬编码上游地址", "Sitoi/dailycheckin\"" not in main_src, "main.py 里还有写死的上游链接")
+check("main.py 不再硬编码外部仓库地址", "api.github.com/repos/Sitoi" not in main_src, "main.py 里还有写死的外部仓库链接")
 check("main.py 的标题拼上了项目名", 'title=f"{PROJECT_NAME} 每日签到' in main_src, main_src[-400:])
 # 标题里带日期的话，同一天跑两次会看到两个不同标题；日期正文「开始时间」里已经有了
 check("标题不带日期（正文里有开始时间）", "每日签到 ·" not in main_src and "utc_time[:10]" not in main_src, "main.py 的标题还在拼日期")

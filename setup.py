@@ -66,8 +66,6 @@ setup(
     project_urls={
         "Source": URL,
         "Issue": URL + "/issues",
-        # 引擎最初来自这里，代码沿用其 MIT 许可
-        "Engine origin": "https://github.com/Sitoi/dailycheckin",
     },
     packages=find_packages(exclude=("config", "panel")),
     install_requires=REQUIRED,

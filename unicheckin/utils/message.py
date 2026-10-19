@@ -263,7 +263,7 @@ def message2ntfy(
 
 def important_notice():
     datas = requests.get(
-        url="https://api.github.com/repos/Sitoi/dailycheckin/issues?state=open&labels=通知",
+        url="https://api.github.com/repos/zonbar/Uni-Check-in/issues?state=open&labels=通知",
         timeout=15,
     ).json()
     if datas:

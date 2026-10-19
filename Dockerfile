@@ -1,5 +1,5 @@
 # 自定义镜像：Uni-Check-in —— 签到引擎 + 网页管理后台
-# 引擎最初来自 https://github.com/Sitoi/dailycheckin （MIT），本项目在其之上加了管理后台
+# 签到引擎 + 网页管理面板。镜像推 ghcr.io/zonbar/uni-check-in
 FROM python:3.9-slim
 
 ENV LANG=C.UTF-8 \

@@ -6,8 +6,7 @@
 [![ghcr](https://img.shields.io/badge/ghcr.io-uni--check--in-2496ed?logo=docker&logoColor=white)](https://github.com/zonbar/Uni-Check-in/pkgs/container/uni-check-in)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-签到引擎最初改编自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（MIT），
-现已重构为独立实现，版权归 zonbar，按 MIT 发布。致谢见 [LICENSE](LICENSE)。
+签到引擎与网页管理面板均为本项目实现，按 MIT 发布。
 
 ![后台效果图](index.png)
 
@@ -222,6 +221,4 @@ python -m panel                    # 默认监听 0.0.0.0:8080
 
 ## 致谢与许可
 
-签到引擎最初改编自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（作者 Sitoi），
-现已重构为独立实现。此项目原作的作者与许可声明在此致谢；
-仓库中现存的代码版权归 zonbar，按 MIT 发布。详见 [LICENSE](LICENSE)。
+签到引擎与网页管理面板版权归 zonbar，按 MIT 发布。详见 [LICENSE](LICENSE)。
