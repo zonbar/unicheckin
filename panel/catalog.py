@@ -14,8 +14,6 @@
 
 from __future__ import annotations
 
-from . import cookies as ck
-
 # --------------------------------------------------------------------------- #
 # 站点元数据
 # --------------------------------------------------------------------------- #
@@ -374,10 +372,6 @@ def all_sites() -> list[dict]:
     return merge_sites(engine_sites())
 
 
-def missing_meta() -> list[str]:
-    """引擎里有、但 panel/catalog.py 还没写元数据的站点。"""
-    return sorted(k for k in engine_sites() if k not in SITE_META)
-
 
 def site_meta(key: str) -> dict:
     for one in all_sites():
@@ -392,9 +386,6 @@ def site_meta(key: str) -> dict:
 def required_of(key: str) -> list[str]:
     return list(site_meta(key).get("required") or [])
 
-
-def has_required(items, key: str) -> list[str]:
-    return ck.missing_required(items, required_of(key))
 
 
 def coerce_field(key: str, field_key: str, value):

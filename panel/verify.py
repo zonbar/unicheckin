@@ -393,6 +393,3 @@ def verify_account(site_key: str, account: dict, verifier: str | None = None) ->
         return bad("没有填写 cookie")
     return func(cookie, account)
 
-
-def verify_site(site_key: str, accounts: list[dict], verifier: str | None = None) -> list[dict]:
-    return [verify_account(site_key, account, verifier) for account in accounts]

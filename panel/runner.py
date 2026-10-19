@@ -28,10 +28,13 @@ _RUNS: dict[str, dict] = {}
 _ORDER: list[str] = []
 _STATUS: dict = {"updated": 0, "sites": {}}
 
+# probe_engine 的结果缓存，见该函数注释
+PROBE_TTL = 60.0
+_PROBE: dict = {"at": 0.0, "result": {}}
+
 PART_RE = re.compile(r"^-{5,}开始执行「(.+?)」签到-{5,}\s*$")
 OK_RE = re.compile(r"✅")
 FAIL_RE = re.compile(r"❌")
-SUMMARY_LINE_RE = re.compile(r"^(.+?)\s*账号数\s*:\s*(\d+)\s*$")
 MAX_LINES = 4000
 
 # 引擎抛的异常原文对用户没意义，但下面这几种一看就知道该怎么办，顺手翻译一下。
@@ -109,19 +112,12 @@ def clear_site_status(key: str, message: str = "cookie 已更新，等待重新�
     """账号被改动后把状态归零。
 
     这一步很关键：否则会出现「改了 cookie → 状态还是旧的失效」这种困惑。
+    与 mark_site 的差别只在于「没这条记录就不新建」—— 站点没配过账号时
+    不该凭空冒出一条 unverified 出来。
     """
     with _LOCK:
-        sites = _STATUS.setdefault("sites", {})
-        if key.upper() in sites:
-            sites[key.upper()] = {
-                "state": "unverified",
-                "source": None,
-                "message": message,
-                "user": None,
-                "checked_at": time.time(),
-                "accounts": [],
-            }
-            _save_status()
+        if key.upper() in _STATUS.get("sites", {}):
+            mark_site(key, "unverified", None, message=message)
 
 
 def all_status() -> dict:
@@ -149,32 +145,34 @@ def _load_runs() -> None:
 def _save_runs() -> None:
     paths.ensure_dirs()
     items = [_RUNS[rid] for rid in _ORDER[-paths.MAX_RUNS :] if rid in _RUNS]
-    payload = [{k: v for k, v in one.items() if k != "proc"} for one in items]
     tmp = paths.RUNS_PATH + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
+        json.dump(items, f, ensure_ascii=False, indent=2)
     os.replace(tmp, paths.RUNS_PATH)
 
 
 def get_run(run_id: str) -> dict | None:
+    """取一次运行的快照。
+
+    早先这里用 ``json.loads(json.dumps(...))`` 做深拷贝，是为了让运行记录里的
+    ``proc``（subprocess 对象）不被序列化出去。但那个键从来没被写入过 ——
+    它是设计过程中留下的防御，代价是一次完整序列化往返，而运行记录最多带
+    MAX_LINES 行日志。改成浅拷贝：``lines`` 列表本身不会被调用方改写。
+    """
     with _LOCK:
         one = _RUNS.get(run_id)
-        return json.loads(json.dumps({k: v for k, v in one.items() if k != "proc"})) if one else None
+        return dict(one) if one else None
 
 
 def list_runs(limit: int = 10) -> list[dict]:
+    """运行历史列表。不带 logs —— 那是 get_run 才给的，避免列表接口把几千行日志也吐出去。"""
     with _LOCK:
         out = []
         for rid in reversed(_ORDER[-limit:]):
             one = _RUNS.get(rid)
             if one:
-                out.append({k: v for k, v in one.items() if k not in ("proc", "lines")})
+                out.append({k: v for k, v in one.items() if k != "lines"})
         return out
-
-
-def latest_run() -> dict | None:
-    runs = list_runs(1)
-    return runs[0] if runs else None
 
 
 # --------------------------------------------------------------------------- #
@@ -215,8 +213,30 @@ def _finish(run: dict, status: str, exit_code: int | None = None) -> None:
     _save_runs()
 
 
-def probe_engine() -> dict:
-    """探测引擎是否可用，跑签到前先自检，失败时给出可操作的提示。"""
+def probe_engine(force: bool = False) -> dict:
+    """探测引擎是否可用，跑签到前先自检，失败时给出可操作的提示。
+
+    这里会**起一个 Python 子进程**（引擎的依赖和面板不同，必须隔离），
+    单次开销在几百毫秒量级。而面板每次 /api/state 都要调它一次 ——
+    刷新页面、每次保存、切页都跟着付一遍。
+
+    所以结果按 TTL 缓存：60 秒内复用上次的结论。
+    ``force=True`` 用于「立即签到」前的那次自检，那里要拿最新状态。
+
+    副作用：引擎装好/ 装坏后，面板最多 60 秒才反映出来。这点可以接受 ——
+    引擎是在**另一个进程**里，跑签到时的变化会立刻反映在签到结果上，
+    而这里只是首页那句「引擎正常 / 异常」的提示。
+    """
+    now = time.time()
+    if not force and _PROBE["at"] and now - _PROBE["at"] < PROBE_TTL:
+        return dict(_PROBE["result"])
+    result = _probe_once()
+    _PROBE["at"] = now
+    _PROBE["result"] = dict(result)
+    return result
+
+
+def _probe_once() -> dict:
     cmd = [sys.executable, "-c", "import unicheckin, unicheckin.configs as c; print(len(c.checkin_map))"]
     env = dict(os.environ, PYTHONPATH=paths.HOME + os.pathsep + os.environ.get("PYTHONPATH", ""))
     try:

@@ -481,7 +481,6 @@ class HttpError(Exception):
         self.message = message
 
 
-HANDLERS = {}
 
 
 class Handler(BaseHTTPRequestHandler):
