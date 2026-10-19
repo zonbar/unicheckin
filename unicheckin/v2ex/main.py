@@ -1,98 +1,78 @@
-import json
-import os
+"""V2EX 每日登录奖励。
+
+流程：抓签到按钮 -> 跟着它给的地址领奖励 -> 回余额页取余额与连续天数。
+
+页面结构是 Discuz 那套，靠正则从 HTML 里抠数据。接口若改版，
+最可能的表现是「正则匹配不到」，所以每一处都给了兜底文案 ——
+宁可显示「获取失败」，也不要让 KeyError 冒上去把整条结果吞掉。
+"""
+
 import re
 
-import requests
-import urllib3
+from unicheckin import MOBILE_UA, CheckIn, CheckInError, Result
 
-from unicheckin import CheckIn
+BASE = "https://www.v2ex.com"
 
-urllib3.disable_warnings()
+# 签到按钮长这样：
+#   <input ... onclick="location.href = '/mission/daily/donate?once=xxxx';" />
+# once 后面那串是一次性令牌，必须原样带回去。
+#
+# 只锚定 location.href = '...' 而不写整条标签：onclick 的值里含 '>'，
+# 用 `<input[^>]*onclick=` 会因为 [^>] 撞上它而匹配失败；而且属性顺序一变就失效。
+_BUTTON_RE = re.compile(r"""location\.href\s*=\s*['"](?P<url>[^'"]+)['"]""")
+
+_USERNAME_RE = re.compile(r'href="/member/[^"/]+"[^>]*class="top">([^<]+)</')
+_BALANCE_RE = re.compile(r'<td class="d" style="text-align: right;">([\d.]+)</td>')
+_TODAY_RE = re.compile(r'<td class="d"><span class="gray">([^<]*)</span></td>')
+# 连续天数。页面里数字与「天」之间可能有空格（"30 天" 或 "30天"），
+# 用 \s* 兼容；原来的正则只认后者，站点加个空格就取不到值。
+_STREAK_RE = re.compile(r'<div class="cell">\s*(\d+)\s*天\s*</div>')
+
+
+def _first(pattern, text, default="获取失败"):
+    """取正则的第一个捕获组，没有就返回 default。
+
+    不写死组名（有的正则叫 ``v`` 有的叫 ``name``）——取第一个非命名组即可，
+    加个命名组纯粹是给人看的，写它只是给自己制造不一致的机会。
+    """
+    m = pattern.search(text)
+    if not m:
+        return default
+    try:
+        value = m.group(1)
+    except IndexError:
+        return default
+    return value.strip() or default
 
 
 class V2ex(CheckIn):
     name = "V2EX 论坛"
+    base_url = BASE
+    user_agent = MOBILE_UA
 
-    def __init__(self, check_item):
-        self.check_item = check_item
+    def run(self) -> Result:
+        self.require_cookie("A2")
+        http = self.http(verify=False)  # V2EX 证书链在部分容器里验不过
+        result = Result()
 
-    @staticmethod
-    def sign(session):
-        msg = []
-        response = session.get(url="https://www.v2ex.com/mission/daily", verify=False)
-        pattern = (
-            r"<input type=\"button\" class=\"super normal button\""
-            r" value=\".*?\" onclick=\"location\.href = \'(.*?)\';\" />"
-        )
-        urls = re.findall(pattern=pattern, string=response.text)
-        url = urls[0] if urls else None
-        if url is None:
-            return [{"name": "签到失败", "value": "cookie 可能过期"}]
-        elif url != "/balance":
-            headers = {"Referer": "https://www.v2ex.com/mission/daily"}
-            data = {"once": url.split("=")[-1]}
-            _ = session.get(
-                url="https://www.v2ex.com" + url,
-                verify=False,
-                headers=headers,
-                params=data,
-            )
-        response = session.get(url="https://www.v2ex.com/balance", verify=False)
-        total = re.findall(
-            pattern=r"<td class=\"d\" style=\"text-align: right;\">(\d+\.\d+)</td>",
-            string=response.text,
-        )
-        total = total[0] if total else "签到失败"
-        today = re.findall(
-            pattern=r'<td class="d"><span class="gray">(.*?)</span></td>',
-            string=response.text,
-        )
-        today = today[0] if today else "签到失败"
-        username = re.findall(
-            pattern=r"<a href=\"/member/.*?\" class=\"top\">(.*?)</a>",
-            string=response.text,
-        )
-        username = username[0] if username else "用户名获取失败"
-        msg += [
-            {"name": "帐号信息", "value": username},
-            {"name": "今日签到", "value": today},
-            {"name": "帐号余额", "value": total},
-        ]
-        response = session.get(url="https://www.v2ex.com/mission/daily", verify=False)
-        data = re.findall(pattern=r"<div class=\"cell\">(.*?)天</div>", string=response.text)
-        data = data[0] + "天" if data else "获取连续签到天数失败"
-        msg += [
-            {"name": "签到天数", "value": data},
-        ]
-        return msg
+        page = http.text("GET", self.url("/mission/daily"))
+        m = _BUTTON_RE.search(page)
+        if not m:
+            # 页面结构变了，或者 cookie 已经失效跳到登录页 —— 两种都归为拿不到按钮
+            raise CheckInError("没找到签到按钮，cookie 可能已过期")
 
-    def main(self):
-        cookie = {item.split("=")[0]: item.split("=")[1] for item in self.check_item.get("cookie").split("; ")}
-        session = requests.session()
-        if self.check_item.get("proxy", ""):
-            proxies = {
-                "http": self.check_item.get("proxy", ""),
-                "https": self.check_item.get("proxy", ""),
-            }
-            session.proxies.update(proxies)
-        requests.utils.add_dict_to_cookiejar(session.cookies, cookie)
-        session.headers.update(
-            {
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 Edg/87.0.664.66",
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-            }
-        )
-        msg = self.sign(session=session)
-        msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
-        return msg
+        target = m.group("url")
+        # 已经领过的页面会直接给 /balance，那就不用再点了
+        if target != "/balance":
+            http.get(self.url(target), params={"once": target.rsplit("=", 1)[-1]},
+                     headers={"Referer": self.url("/mission/daily")})
 
+        balance_page = http.text("GET", self.url("/balance"))
+        result.add("帐号信息", _first(_USERNAME_RE, balance_page, "用户名获取失败"))
+        result.add("今日签到", _first(_TODAY_RE, balance_page))
+        result.add("帐号余额", _first(_BALANCE_RE, balance_page))
 
-if __name__ == "__main__":
-    with open(
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json"),
-        encoding="utf-8",
-    ) as f:
-        datas = json.loads(f.read())
-    _check_item = datas.get("V2EX", [])[0]
-    print(V2ex(check_item=_check_item).main())
+        daily = http.text("GET", self.url("/mission/daily"))
+        streak = _STREAK_RE.search(daily)
+        result.add("签到天数", f"{streak.group(1)}天" if streak else "获取连续签到天数失败")
+        return result

@@ -1,68 +1,57 @@
-import json
-import os
+"""有道云笔记签到，顺带算一下空间增长。
 
-import requests
+接口要按顺序打：先刷新会话拿新 cookie，再用它同步、签到、领广告奖励，
+最后把三处的空间增量加起来。少了任何一步都拿不到完整数值。
+"""
 
-from unicheckin import CheckIn
+from unicheckin import CheckIn, CheckInError, Result
+
+MB = 1024 * 1024
+
+# 空间以字节计，广告奖励要刷 3 次才满
+AD_ROUNDS = 3
+
+SYNC_API = "/yws/api/daupromotion"
+USER_API = "/yws/mapi/user"
+REFRESH_API = "/login/acc/pe/getsess"
 
 
 class YouDao(CheckIn):
     name = "有道云笔记"
+    base_url = "https://note.youdao.com"
 
-    def __init__(self, check_item):
-        self.check_item = check_item
+    def run(self) -> Result:
+        # YNOTE_PERS 里夹着用户 id，格式固定是 "appid||uid||token"
+        ynote_pers = self.require_cookie("YNOTE_PERS").get("YNOTE_PERS", "")
+        parts = ynote_pers.split("||")
+        uid = parts[-2] if len(parts) >= 2 else "未获取到账号信息"
 
-    @staticmethod
-    def sign(cookies):
+        http = self.http()
+        # 第一步：换一个会话 cookie，后续请求都要带新的
+        refreshed = http.get(self.url(REFRESH_API), params={"product": "YNOTE"})
+        http.replace_cookies(dict(refreshed.cookies))
+
+        # 第二步：同步。它同时也是登录态是否有效的判据 ——
+        # 失效时接口回一段带 "error" 的 JSON（HTTP 可能是 500）
+        result = Result()
+        result.add("帐号信息", uid)
+        sync = http.json("POST", self.url(SYNC_API), params={"method": "sync"})
+        if "rewardSpace" not in sync:
+            raise CheckInError("Cookie 可能过期，请重新登录后复制")
+
+        # 第三步：签到本身
+        checkin = http.json("POST", self.url(USER_API), params={"method": "checkin"})
+        checkin_space = checkin.get("space", 0) // MB
+
+        # 第四步：刷广告奖励。任一轮失败不影响主流程，跳过即可。
         ad_space = 0
-        refresh_cookies_res = requests.get("http://note.youdao.com/login/acc/pe/getsess?product=YNOTE", cookies=cookies)
-        cookies = dict(refresh_cookies_res.cookies)
-        url = "https://note.youdao.com/yws/api/daupromotion?method=sync"
-        res = requests.post(url=url, cookies=cookies)
-        if "error" not in res.text:
-            checkin_response = requests.post(
-                url="https://note.youdao.com/yws/mapi/user?method=checkin",
-                cookies=cookies,
-            )
-            for i in range(3):
-                ad_response = requests.post(
-                    url="https://note.youdao.com/yws/mapi/user?method=adRandomPrompt",
-                    cookies=cookies,
-                )
-                ad_space += ad_response.json().get("space", 0) // 1048576
-            if "reward" in res.text:
-                sync_space = res.json().get("rewardSpace", 0) // 1048576
-                checkin_space = checkin_response.json().get("space", 0) // 1048576
-                space = sync_space + checkin_space + ad_space
-                youdao_message = f"+{space}M"
-            else:
-                youdao_message = "获取失败"
-        else:
-            youdao_message = "Cookie 可能过期"
-        return youdao_message
+        for _ in range(AD_ROUNDS):
+            try:
+                reward = http.json("POST", self.url(USER_API), params={"method": "adRandomPrompt"})
+            except CheckInError:
+                break
+            ad_space += reward.get("space", 0) // MB
 
-    def main(self):
-        youdao_cookie = {item.split("=")[0]: item.split("=")[1] for item in self.check_item.get("cookie").split("; ")}
-        try:
-            ynote_pers = youdao_cookie.get("YNOTE_PERS", "")
-            uid = ynote_pers.split("||")[-2]
-        except Exception as e:
-            print(f"获取账号信息失败: {e}")
-            uid = "未获取到账号信息"
-        msg = self.sign(cookies=youdao_cookie)
-        msg = [
-            {"name": "帐号信息", "value": uid},
-            {"name": "获取空间", "value": msg},
-        ]
-        msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
-        return msg
-
-
-if __name__ == "__main__":
-    with open(
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json"),
-        encoding="utf-8",
-    ) as f:
-        datas = json.loads(f.read())
-    _check_item = datas.get("YOUDAO", [])[0]
-    print(YouDao(check_item=_check_item).main())
+        total = sync.get("rewardSpace", 0) // MB + checkin_space + ad_space
+        result.add("获取空间", f"+{total}M")
+        return result
