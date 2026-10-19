@@ -157,6 +157,12 @@ jobs:
             http://127.0.0.1:18080/api/cookies/normalize -o norm.json
           python3 -c "import json;r=json.load(open('norm.json',encoding='utf-8'));assert r['ok'] is True,r;assert r['cookie']=='SESSDATA=abc; bili_jct=def;',r['cookie'];assert r['count']==2,r;print('规范化结果:',r['cookie'])"
 
+      # 引擎自测要真import 引擎模块，而 i茅台 等站点在模块顶层就 import 了
+      # Crypto / requests（请求签名需要）。runner 里那个容器是有依赖的，
+      # 但 GitHub runner 上只有裸 python3，不装的话一 import 就 ModuleNotFoundError。
+      - name: 装引擎依赖（自测要真import 引擎）
+        run: python3 -m pip install --quiet -r requirements.txt
+
       - name: 离线自测
         run: |
           set -e
