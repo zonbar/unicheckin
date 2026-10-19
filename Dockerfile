@@ -47,9 +47,9 @@ RUN set -eux; \
     grep -q 'unicheckin' panel/paths.py; \
     echo '面板品牌自检通过'
 
-# 溯源信息：面板「设置 → 环境信息」里显示的引擎版本/上游提交就来自这里，
-# 由 tools/sync_upstream.py 在同步上游时生成。
-COPY UPSTREAM.json ./UPSTREAM.json
+# 引擎溯源：这里原本 COPY UPSTREAM.json（脱离上游时那个文件已删除，
+# 留着会让 docker build 直接失败）。改为烤进构建时的提交号 ——
+# 面板「关于本项目」显示的就是它，比它跟 GitHub 上 main 的最新提交比。
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
