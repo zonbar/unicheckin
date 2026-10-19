@@ -19,3 +19,6 @@ venv/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 本地导出的补丁 / 基线快照（发布前的临时产物）
+.push/

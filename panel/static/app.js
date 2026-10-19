@@ -1,4 +1,4 @@
-/* unicheckin 签到管理面板 —— 无框架、无构建步骤的纯前端 */
+/* 全能签到管理面板 —— 无框架、无构建步骤的纯前端 */
 (() => {
   "use strict";
 
@@ -10,6 +10,36 @@
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* 隐私模式：放弃持久化 */ } };
 
   const TOKEN = lsGet("panel_token") || "";
+
+  /* ---- 配色主题：自动 / 浅色 / 深色 ----
+     必须在脚本一进来就把 <html data-theme> 设好，不能等到点按钮才设：
+     样式表已经画完第一帧了再切，用户会看到一帧闪白。脚本在 body 末尾同步执行，
+     也就是首帧之前，这个时机正好。
+
+     "auto" 是把属性整个删掉，而不是 data-theme="auto" ——
+     CSS 里 :root:not([data-theme="light"]) 这类选择器要靠"属性不存在"
+     来判定自动态，写上auto 会让它们全部失配。 */
+  const THEMES = ["auto", "light", "dark"];
+  const readTheme = () => {
+    const v = lsGet("dc_theme");
+    return THEMES.includes(v) ? v : "auto";
+  };
+  function applyTheme(mode) {
+    if (mode === "auto") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", mode);
+    }
+    // 按钮的选中态同步。这里不能用 $() —— 它定义在下面几十行，
+    // 而首帧这段必须已经跑完，所以直接用原生查询。
+    const seg = document.getElementById("themeSeg");
+    if (seg) {
+      for (const btn of seg.querySelectorAll("button[data-theme]")) {
+        btn.classList.toggle("active", btn.dataset.theme === mode);
+      }
+    }
+  }
+  applyTheme(readTheme());
 
   /* 「上次登录到哪一步」的本地提示。只影响首帧先画哪一屏，真正的判定永远以
      /api/auth/status 为准 —— 它是客户端存的，伪造它只能骗到自己的浏览器。 */
@@ -38,7 +68,10 @@
     logTimer: null,
   };
 
-  const $ = (id) => document.getElementById(id);
+  /* 自绘下拉接管：已升级的下拉在 window.DD_PROXY 里有代理对象，
+     这里优先返回它，于是 .value / .innerHTML / .onchange 全部打到自绘控件上。
+     未升级的控件照旧走 getElementById，行为不变。 */
+  const $ = (id) => window.DD_PROXY[id] || document.getElementById(id);
   const esc = (v) =>
     String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -120,7 +153,7 @@
     $("gateTitle").textContent = setup ? "设置后台账号" : "登录后台";
     $("gateSub").innerHTML = setup
       ? "第一次使用，先给这个管理后台设置一个账号和密码。<br>以后每次打开都要用它登录，也可以在「设置」里改。"
-      : "请输入后台账号和密码。";
+      : "请输入用户名和密码。";
     $("gatePass2Wrap").classList.toggle("hidden", !setup);
     $("gatePass").setAttribute("autocomplete", setup ? "new-password" : "current-password");
     $("gateSubmit").textContent = setup ? "创建并进入" : "登录";
@@ -320,9 +353,9 @@
     if (!S.state) return;
     const panel = S.state.panel || {};
     const engine = S.state.engine || {};
-    const name = panel.title || "unicheckin";
+    const name = panel.title || "全能签到管理面板";
     $("panelTitle").textContent = name;
-    document.title = `${name} · 签到管理面板`;
+    document.title = name;
     $("panelVersion").textContent = panel.version || "";
 
     const dot = $("engineDot");
@@ -886,18 +919,53 @@
         <div class="nbox-fields">${(st.notice_keys || []).map((k) => nfHTML(k.key, k.label, notice[k.key], k.label)).join("")}</div>
       </section>`;
     }
-    return groups.map((g) => {
+    /* 每个渠道自带一个开关，关掉就把它的字段收起来。
+       七个渠道十来个输入框全摊开的话，真正要用的通常只有一两个，
+       其余全是视觉噪音 —— 而且用户容易往不相干的渠道里误填密钥。
+
+       开关状态**不落盘**：后端只接受 NOTICE_KEY_NAMES 白名单里的键，
+       自己加 "_on" 之类的键会被 store 过滤掉。这里改成
+       「关掉的渠道，保存时不提交它的字段」，效果等同清空，
+       后端零改动，重新打开时自然又是关闭态。
+       「有没有配过」仍由"字段有值"推断，与开关状态解耦。 */
+    return groups.map((g, gi) => {
       const filled = g.fields.filter((f) => (notice[f.key] || "").trim()).length;
       const foot = filled
         ? `<b class="nbox-count">已配置 ${filled} 项</b>`
         : `<span class="nbox-idle">未配置</span>`;
-      return `<section class="nbox${g.wide ? " wide" : ""}${filled ? " on" : ""}">
-        <header class="nbox-head"><i class="nbox-dot"></i><b>${esc(g.name)}</b>
-          <span class="nbox-tag">${g.fields.length} 项</span></header>
+      return `<section class="nbox${g.wide ? " wide" : ""}${filled ? " on" : ""}" data-ngroup="${gi}">
+        <header class="nbox-head">
+          <i class="nbox-dot"></i><b>${esc(g.name)}</b>
+          <span class="nbox-tag">${g.fields.length} 项</span>
+          <label class="switch nbox-sw" title="启用 ${esc(g.name)}">
+            <input type="checkbox" data-ngroup-on="${gi}"${filled ? " checked" : ""}> 启用
+          </label>
+        </header>
         <div class="nbox-fields">${g.fields.map((f) => nfHTML(f.key, f.label, notice[f.key], f.full)).join("")}</div>
         <p class="nbox-foot">${foot}</p>
       </section>`;
     }).join("");
+  }
+
+  /* 把某个渠道方框按开关状态收起/展开。
+     开关关 → 隐藏字段区与状态行，并加 .off 让标题行也压暗。 */
+  function applyChannelToggle(box, sw) {
+    if (!box || !sw) return;
+    const off = !sw.checked;
+    box.classList.toggle("off", off);
+    const f = box.querySelector(".nbox-fields");
+    if (f) f.hidden = off;
+    const ft = box.querySelector(".nbox-foot");
+    if (ft) ft.hidden = off;
+  }
+
+  /* 方框刚渲染完，把初始状态套上去：没配过的渠道默认收起输入框。
+     必须在 noticeGroups.innerHTML = 之后调 —— 之前这段循环写在 bind() 里，
+     那时元素还没生成，一个都找不到，结果全部展开。 */
+  function initChannelToggles() {
+    for (const box of document.querySelectorAll("[data-ngroup]")) {
+      applyChannelToggle(box, box.querySelector("[data-ngroup-on]"));
+    }
   }
 
   /* ======================================================================
@@ -1038,6 +1106,34 @@
     return `${last}${bad ? `（${bad} 个站点失效）` : ""} ｜ 下次 ${next} —— 只校验已配置且有在线接口的站点；全部有效时静默；同一批失效每 ${vs.remind_after_hours || 24} 小时最多提醒一次。${err}`;
   }
 
+  /* 设置页左导航 -> 右面板。记住上次停在哪一节，下次打开还在原地，
+     比每次都回到第一节顺手。面板本身在 HTML 里是七个 .section，
+     这里只切 hidden，不重新渲染 —— 所有 id 都在，JS 绑定一个都不用改。 */
+  const SETTINGS_LAST = "dc_settings_pane";
+  function showSettingsPane(key) {
+    const nav = document.querySelector(".settings-nav");
+    const panes = document.querySelector(".settings-panes");
+    if (!nav || !panes) return;
+    let found = false;
+    for (const b of nav.querySelectorAll("button[data-spanel]")) {
+      const on = b.dataset.spanel === key;
+      b.classList.toggle("active", on);
+      if (on) found = true;
+    }
+    // key 不认识（以后加了新面板但忘了加导航）时退回第一节，别让右侧全空
+    if (!found) {
+      const first = nav.querySelector("button[data-spanel]");
+      if (first) first.classList.add("active");
+      key = first ? first.dataset.spanel : key;
+    }
+    for (const pane of panes.querySelectorAll("[data-panel]")) {
+      pane.classList.toggle("hidden", pane.dataset.panel !== key);
+    }
+    lsSet(SETTINGS_LAST, key);
+    // 面板高度各不相同，切完把滚动位置归零，否则会停在上次的高度上
+    panes.scrollTop = 0;
+  }
+
   async function openSettings() {
     const st = S.state;
     const sch = st.schedule;
@@ -1066,6 +1162,7 @@
     $("accTip").textContent = S.auth && S.auth.auth_path ? `凭据存放：${S.auth.auth_path}` : "";
 
     $("noticeGroups").innerHTML = noticeHTML(st);
+    initChannelToggles();   // 必须紧跟其后：此刻元素才存在
 
     $("configTip").textContent = `路径：${st.panel.config_path}`;
 
@@ -1097,6 +1194,7 @@
     ];
     $("envInfo").textContent = lines.filter((l) => l !== null).join("\n");
 
+    showSettingsPane(lsGet(SETTINGS_LAST) || "account");
     $("settings").showModal();
   }
 
@@ -1128,9 +1226,24 @@
      绑定
      ====================================================================== */
   function bind() {
+    // 先把原生 <select> 升级成自绘下拉：bind 里下面所有的 $(id).onchange /
+    // .value / .innerHTML 都要打在代理上，顺序反了就绑到没人用的原生控件上。
+    upgradeSelects([
+      "groupFilter", "filter", "sortSelect",        // 工具条
+      "logFile",// 运行日志
+      "schPreset", "vsPreset", "backupSelect",     // 设置页
+    ]);
     $("btnRefresh").onclick = () => loadState();
     $("btnRunAll").onclick = () => startRun([]);
     $("btnVerifyAll").onclick = () => verifyAll();
+    // 主题：点哪个存哪个，下次进来直接生效（首帧就套用，不闪）
+    for (const btn of $("themeSeg").querySelectorAll("button[data-theme]")) {
+      btn.onclick = () => {
+        const mode = btn.dataset.theme;
+        applyTheme(mode);
+        lsSet("dc_theme", mode);
+      };
+    }
     $("btnDrawer").onclick = () => openDrawer("live");
     $("btnDrawerClose").onclick = closeDrawer;
     $("overlay").onclick = closeDrawer;
@@ -1180,7 +1293,16 @@
     });
 
     $("btnSettings").onclick = openSettings;
-    $("btnCloseSettings").onclick = $("btnCloseSettings2").onclick = () => $("settings").close();
+    // 设置页左导航
+    for (const b of document.querySelectorAll(".settings-nav button[data-spanel]")) {
+      b.onclick = () => showSettingsPane(b.dataset.spanel);
+    }
+    $("btnCloseSettings2").onclick = () => $("settings").close();
+    // 设置页点遮罩关闭：原生 dialog 的遮罩点击落在 dialog 自己身上，
+    // 与站点配置弹窗的行为对齐（那边早就有，见 closeSite 的绑定）。
+    $("settings").addEventListener("click", (ev) => {
+      if (ev.target === $("settings")) $("settings").close();
+    });
     $("btnSaveAccount").onclick = saveAccount;
     $("btnLogout").onclick = logout;
 
@@ -1221,9 +1343,24 @@
       b.onclick = () => checkUpdate(true);
     });
 
+    // 渠道开关：切换时收起/展开该组的字段。用委托绑定 ——
+    // noticeGroups 的 innerHTML 每次 openSettings 都会重画，直接绑会丢。
+    $("noticeGroups").addEventListener("change", (ev) => {
+      const sw = ev.target.closest("[data-ngroup-on]");
+      if (!sw) return;
+      applyChannelToggle(sw.closest("[data-ngroup]"), sw);
+    });
+
     $("btnSaveNotice").onclick = async () => {
       const notice = {};
-      document.querySelectorAll("[data-notice]").forEach((el) => (notice[el.dataset.notice] = el.value.trim()));
+      // 关闭的渠道不提交任何字段 —— 等同于清空它。见 noticeHTML 里的说明。
+      document.querySelectorAll("[data-ngroup]").forEach((box) => {
+        const on = box.querySelector("[data-ngroup-on]");
+        if (on && !on.checked) return;
+        box.querySelectorAll("[data-notice]").forEach((el) => {
+          notice[el.dataset.notice] = el.value.trim();
+        });
+      });
       try {
         await api("/notice", { method: "POST", body: { notice } });
         toast("推送设置已保存");

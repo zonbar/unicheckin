@@ -37,7 +37,7 @@ PORT = int(_env("PANEL_PORT", "8080"))
 # 可选：给脚本 / 自动化用的静态口令。留空就只走「账号密码登录」，这是默认。
 TOKEN = _env("PANEL_TOKEN", "")
 # 页面标题（浏览器标签 + 顶栏品牌名）。想换成自己的叫法就设 PANEL_TITLE。
-TITLE = _env("PANEL_TITLE", "unicheckin")
+TITLE = _env("PANEL_TITLE", "全能签到管理面板")
 TZ = _env("TZ", "Asia/Shanghai")
 
 # 本项目的仓库地址（面板 = 这个仓库新增的部分）。页脚的链接、以及

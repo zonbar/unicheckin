@@ -127,11 +127,33 @@ check("meta 不换行", "white-space: nowrap" in meta_css, meta_css.strip()[:110
 check("meta 溢出用省略号", "overflow: hidden" in meta_css and "text-overflow: ellipsis" in meta_css, meta_css.strip()[:110])
 mh = re.search(r"height:\s*(\d+(?:\.\d+)?)px", meta_css)
 mlh = re.search(r"line-height:\s*(\d+(?:\.\d+)?)px", meta_css)
-mpb = re.search(r"padding:\s*0\s+\d+px\s+(\d+(?:\.\d+)?)px", meta_css)
+# padding 可能是字面量（padding: 0 16px 12px），也可能是 token（var(--sp-4)）。
+# 两种都解析出来，token 就去 :root 里查它的实际值 —— 这条断言的保护意义是
+# 「改了下间距就要同步改写死的高度」，token 化了更不该失效。
+mpb = re.search(r"padding:\s*0\s+(?:\d+(?:\.\d+)?px|var\(--[\w-]+\))\s+(\d+(?:\.\d+)?px|var\(--[\w-]+\))", meta_css)
+
+
+def resolve_len(raw: str) -> float | None:
+    """把 padding 的第三个值解成 px：字面量直接取，token 去 :root 里查。"""
+    if raw is None:
+        return None
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)px", raw)
+    if m:
+        return float(m.group(1))
+    m = re.fullmatch(r"var\(--([\w-]+)\)", raw.strip())
+    if not m:
+        return None
+    tok = re.search(rf"--{re.escape(m.group(1))}\s*:\s*(\d+(?:\.\d+)?)px", css)
+    return float(tok.group(1)) if tok else None
+
+
 check("meta 高度写死了（不是靠内容撑）", bool(mh), meta_css.strip()[:110])
+_pb = resolve_len(mpb.group(1)) if mpb else None
 check("height 正好 = 行高 + 下间距（改 padding 时这里会红，提醒一起改）",
-      bool(mh and mlh and mpb) and float(mh.group(1)) == float(mlh.group(1)) + float(mpb.group(1)),
-      f"height={mh and mh.group(1)} line-height={mlh and mlh.group(1)} padding-bottom={mpb and mpb.group(1)}")
+      bool(mh and mlh and _pb is not None)
+      and float(mh.group(1)) == float(mlh.group(1)) + _pb,
+      f"height={mh and mh.group(1)} line-height={mlh and mlh.group(1)} "
+      f"padding-bottom={mpb and mpb.group(1)}(={_pb})")
 check("完整 meta 挂到 title 上（截断的部分还能看到）", 'class="card-meta" title=' in js)
 check("展开/收起后 meta 的 title 也跟着更新", "el.title = el.textContent" in js)
 
@@ -200,8 +222,23 @@ check("整行铺开用 1 / -1（窄屏只剩一列时 span 2 会凭空多出一�
 check("字段网格自适应列数（宽方框自然排更多列）",
       "grid-template-columns: repeat(auto-fit, minmax(146px, 1fr))" in rule(".nbox-fields"))
 check("配置键放不下时省略号截断，完整值挂 title", "text-overflow: ellipsis" in rule(".nf-key") and 'title="${esc((full || label)' in js)
-check("表单事件仍按 data-notice 取值（保存逻辑没被改坏）",
-      'document.querySelectorAll("[data-notice]")' in js and 'data-notice="${esc(key)}"' in js)
+check("表单字段仍按 data-notice 取值（保存逻辑没被改坏）",
+      'data-notice="${esc(key)}"' in js and 'el.dataset.notice' in js)
+# 每个渠道一个开关：关掉的渠道保存时不提交其字段（等同清空），
+# 所以遍历方式从「全局找所有 data-notice」变成「按组找、跳过关闭的」。
+check("关闭的渠道不参与保存（开关关掉即清空）",
+      'box.querySelectorAll("[data-notice]")' in js
+      and "if (on && !on.checked) return;" in js)
+check("渠道开关会收起/展开该组字段",
+      'data-ngroup-on' in js
+      and "function applyChannelToggle" in js
+      and "if (f) f.hidden = off;" in js)
+# 这条曾经真的错过：初始收起写在了 bind() 里，而 [data-ngroup] 元素是
+# openSettings 时才渲染的 —— 循环执行时一个都找不到，结果全部展开。
+check("初始收起紧跟在渲染之后调用",
+      'innerHTML = noticeHTML(st);' in js and "initChannelToggles();" in js)
+check("开关用事件委托绑定（noticeGroups 每次重画也不会丢）",
+      '$("noticeGroups").addEventListener("change"' in js)
 check("保存按钮还在", 'id="btnSaveNotice"' in html)
 
 print("9) 更新提示：只在设置页最下方（首页不再有那块）")

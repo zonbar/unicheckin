@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>unicheckin · 签到管理面板</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f6feb'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>全能签到管理面板</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3C<rect x='3' y='3' width='12.4' height='12.4' rx='3.6' fill='%236d4aad'/><rect x='16.6' y='3' width='12.4' height='12.4' rx='3.6' fill='%239479c6'/><rect x='3' y='16.6' width='12.4' height='12.4' rx='3.6' fill='%239479c6'/><rect x='16.6' y='16.6' width='12.4' height='12.4' rx='3.6' fill='%23b6a4d8'/>%3C/svg%3E">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -19,17 +19,17 @@
 <div class="gate" id="gate">
   <div class="gate-card">
     <div class="gate-logo" aria-hidden="true">
-      <svg viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M9 17l5 5 9-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 32 32" width="52" height="52"><rect x='3' y='3' width='12.4' height='12.4' rx='3.6' fill='#6d4aad'/><rect x='16.6' y='3' width='12.4' height='12.4' rx='3.6' fill='#9479c6'/><rect x='3' y='16.6' width='12.4' height='12.4' rx='3.6' fill='#9479c6'/><rect x='16.6' y='16.6' width='12.4' height='12.4' rx='3.6' fill='#b6a4d8'/></svg>
     </div>
     <h1 id="gateTitle">正在连接面板…</h1>
     <p class="gate-sub" id="gateSub">正在确认登录状态，马上就好。</p>
 
     <form id="gateForm" autocomplete="off" class="hidden">
-      <label class="fld"><span>账号</span>
-        <input type="text" id="gateUser" autocomplete="username" spellcheck="false" placeholder="例如 admin">
+      <label class="fld"><span>用户名</span>
+        <input type="text" id="gateUser" autocomplete="username" spellcheck="false" placeholder="admin">
       </label>
       <label class="fld"><span>密码</span>
-        <input type="password" id="gatePass" autocomplete="new-password" placeholder="至少 6 位">
+        <input type="password" id="gatePass" autocomplete="new-password" placeholder="admin123">
       </label>
       <label class="fld" id="gatePass2Wrap"><span>确认密码</span>
         <input type="password" id="gatePass2" autocomplete="new-password" placeholder="再输一遍">
@@ -47,10 +47,10 @@
 <header>
   <div class="brand">
     <span class="mark" aria-hidden="true">
-      <svg viewBox="0 0 32 32" width="28" height="28"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M9 17l5 5 9-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 32 32" width="28" height="28"><rect x='3' y='3' width='12.4' height='12.4' rx='3.6' fill='#6d4aad'/><rect x='16.6' y='3' width='12.4' height='12.4' rx='3.6' fill='#9479c6'/><rect x='3' y='16.6' width='12.4' height='12.4' rx='3.6' fill='#9479c6'/><rect x='16.6' y='16.6' width='12.4' height='12.4' rx='3.6' fill='#b6a4d8'/></svg>
     </span>
     <span class="brand-text">
-      <b id="panelTitle">unicheckin</b>
+      <b id="panelTitle">全能签到管理面板</b>
       <span class="sub"><span class="dot" id="engineDot"></span><span id="engineText">引擎探测中</span><span class="sep">·</span>v<span id="panelVersion"></span></span>
     </span>
   </div>
@@ -64,6 +64,21 @@
   </div>
 
   <div class="actions">
+    <div class="seg theme-seg" id="themeSeg" role="group" aria-label="配色主题">
+      <button data-theme="auto" title="跟随系统（白天浅色、晚上深色）">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="1.4" y="2.6" width="13.2" height="8.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.4 13.4h5.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        自动
+      </button>
+      <button data-theme="light" title="始终用浅色">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M12.8 3.2l-1.1 1.1M4.3 11.7l-1.1 1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        浅色
+      </button>
+      <button data-theme="dark" title="始终用深色">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.7 5.7 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        深色
+      </button>
+    </div>
+
     <button class="primary" id="btnRunAll">
       <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8.9 1.6 3.3 9.1h3.6l-.8 5.3L11.9 7H8.3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       全部签到
@@ -80,45 +95,59 @@
       <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.2 5h11.6M2.2 11h11.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="5" r="1.9" fill="currentColor"/><circle cx="10.4" cy="11" r="1.9" fill="currentColor"/></svg>
       设置
     </button>
+
+    <!-- 退出登录放在顶栏而不是设置页里：它是「离开当前会话」而不是
+         「配置面板」，混在设置表单里容易被当成又一个设置项而找不到。
+         视觉上用 ghost 样式拉开距离，跟主操作区分开。 -->
+    <button id="btnLogout" title="退出登录">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 2.6H3.6a1.4 1.4 0 0 0-1.4 1.4v8a1.4 1.4 0 0 0 1.4 1.4H6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10.4 11.2 13.6 8l-3.2-3.2M13.2 8H6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      退出
+    </button>
   </div>
 </header>
 
 <div class="toolbar">
-  <div class="search-wrap">
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <input type="search" id="search" placeholder="搜索站点名或 KEY（按 / 聚焦）" spellcheck="false">
+  <div class="toolbar-group">
+    <div class="search-wrap">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="search" id="search" placeholder="搜索站点名或 KEY（按 / 聚焦）" spellcheck="false">
+    </div>
+
+    <div class="seg" id="viewSeg" role="group" aria-label="视图">
+      <button data-view="card" class="active">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        卡片
+      </button>
+      <button data-view="list">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        列表
+      </button>
+    </div>
   </div>
 
-  <div class="seg" id="viewSeg" role="group" aria-label="视图">
-    <button data-view="card" class="active">
-      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-      卡片
-    </button>
-    <button data-view="list">
-      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      列表
-    </button>
+  <span class="toolbar-sep" aria-hidden="true"></span>
+
+  <div class="toolbar-group right">
+    <select id="groupFilter" title="按分类筛选"></select>
+
+    <select id="filter">
+      <option value="all">全部状态</option>
+      <option value="configured">已配置</option>
+      <option value="unconfigured">未配置</option>
+      <option value="valid">cookie 有效</option>
+      <option value="invalid">cookie 失效</option>
+      <option value="unverified">未校验</option>
+    </select>
+
+    <select id="sortSelect" title="站点排序方式">
+      <option value="configured">已配置优先</option>
+      <option value="default">默认顺序</option>
+      <option value="name">按名称</option>
+      <option value="group">按分类</option>
+    </select>
+
+    <button class="chip-btn" id="btnOnlyTodo" title="只看还没配置 cookie 的站点">只看待配置</button>
   </div>
-
-  <select id="groupFilter" title="按分类筛选"></select>
-
-  <select id="filter">
-    <option value="all">全部状态</option>
-    <option value="configured">已配置</option>
-    <option value="unconfigured">未配置</option>
-    <option value="valid">cookie 有效</option>
-    <option value="invalid">cookie 失效</option>
-    <option value="unverified">未校验</option>
-  </select>
-
-  <select id="sortSelect" title="站点排序方式">
-    <option value="configured">已配置优先</option>
-    <option value="default">默认顺序</option>
-    <option value="name">按名称</option>
-    <option value="group">按分类</option>
-  </select>
-
-  <button class="chip-btn" id="btnOnlyTodo" title="只看还没配置 cookie 的站点">只看待配置</button>
 
   <span class="spacer"></span>
 
@@ -193,26 +222,64 @@
 </aside>
 
 <dialog id="settings">
-  <div class="dlg-head"><h3>设置</h3><span class="spacer"></span><button class="ghost tiny" id="btnCloseSettings">关闭</button></div>
-  <div class="dlg-body">
+  <!-- 头部不放关闭：底部已有一个，左上角再来一个会让「关闭」在弹窗里出现两次。
+       需要关闭有三条路：底部按钮、按Esc、点遮罩。 -->
+  <div class="dlg-head">
+    <h3>设置</h3>
+    <span class="muted head-sub">面板行为、定时任务、推送与高级配置</span>
+  </div>
+  <div class="dlg-body settings-body">
+    <nav class="settings-nav" aria-label="设置分类">
+      <div class="nav-group">账号与自动化</div>
+      <button data-spanel="account" class="active">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="5.2" r="2.8" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.8 13.4c0-2.6 2.3-4.2 5.2-4.2s5.2 1.6 5.2 4.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        后台账号
+      </button>
+      <button data-spanel="schedule">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.4V8l2.4 1.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        定时签到
+      </button>
+      <button data-spanel="verify">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1.7 3 3.5v4c0 2.9 2.1 5.3 5 6.5 2.9-1.2 5-3.6 5-6.5v-4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.9 8 7.4 9.5l3-3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        定时校验
+      </button>
 
-    <div class="section">
-      <h4>后台账号 <span class="muted">（登录这个面板用的账号密码）</span></h4>
+      <div class="nav-group">通知与高级</div>
+      <button data-spanel="notice">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.6 5.6a5.4 5.4 0 0 1 10.8 0v3.1l1.4 2.1H1.2l1.4-2.1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.2 13a2 2 0 0 0 3.6 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        推送通知
+      </button>
+      <button data-spanel="config">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M9.4 1.8 8 3.2l-1.8-.8L4.8 4l.6 1.9-1.7 1v2.4l1.7 1-.6 1.9 1.4 1.6 1.8-.8 1.4 1.4.9-2.3h2.4l.9 2.3 1.4-1.4 1.8.8 1.4-1.6-.6-1.9 1.7-1V7l-1.7-1 .6-1.9-1.4-1.6-1.8.8L9.4 1.8z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="8" cy="8.2" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+        config.json
+      </button>
+      <button data-spanel="env">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5 6.2h1.6M5 9.8h1.6M8.4 6.2h3M8.4 9.8h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        运行环境
+      </button>
+      <button data-spanel="about">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5" r="0.9" fill="currentColor"/></svg>
+        关于本项目
+      </button>
+    </nav>
+
+    <div class="settings-panes">
+    <div class="section" data-panel="account">
+      <h4>后台账号 <span class="muted">（登录这个面板用的用户名和密码）</span></h4>
       <div class="kv">
-        <div><label>账号 <span class="opt">当前：<b id="accCurrent"></b></span></label><input type="text" id="accUser" autocomplete="off"></div>
+        <div><label>用户名 <span class="opt">当前：<b id="accCurrent"></b></span></label><input type="text" id="accUser" autocomplete="off"></div>
         <div><label>当前密码 <span class="req">修改时必须填</span></label><input type="password" id="accOld" autocomplete="off"></div>
         <div><label>新密码 <span class="opt">留空则不改</span></label><input type="password" id="accNew" autocomplete="new-password"></div>
         <div><label>确认新密码</label><input type="password" id="accNew2" autocomplete="new-password"></div>
       </div>
       <div class="row">
         <button class="primary" id="btnSaveAccount">保存账号设置</button>
-        <button id="btnLogout">退出登录</button>
         <span class="spacer"></span>
         <span class="muted" style="font-size:12px" id="accTip"></span>
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-panel="schedule">
       <h4>定时签到</h4>
       <div class="row" style="margin:0">
         <label class="switch"><input type="checkbox" id="schEnabled"> 启用定时任务</label>
@@ -225,7 +292,7 @@
       <p class="tip" id="schTip"></p>
     </div>
 
-    <div class="section">
+    <div class="section" data-panel="verify">
       <h4>定时校验 <span class="muted">（定期在线校验 cookie，失效才通知）</span></h4>
       <div class="row" style="margin:0">
         <label class="switch"><input type="checkbox" id="vsEnabled"> 启用定时校验</label>
@@ -239,7 +306,7 @@
       <p class="tip" id="vsTip"></p>
     </div>
 
-    <div class="section">
+    <div class="section" data-panel="notice">
       <h4>推送通知 <span class="muted">（可选。填了就把签到结果推给你）</span></h4>
       <p class="muted" style="font-size:12px;margin:0 0 10px">
         一次签到只推<b>一条</b>消息：带标题，各站点结果之间用分隔行隔开，末尾附任务信息与项目地址。
@@ -251,7 +318,7 @@
       <p class="tip">Telegram / 钉钉 / 飞书 / Server 酱 等只填自己要用的那几项即可，其它留空。</p>
     </div>
 
-    <div class="section">
+    <div class="section" data-panel="config">
       <h4>config.json <span class="muted">（高级：直接编辑引擎配置文件）</span></h4>
       <p class="tip" id="configTip"></p>
       <textarea id="configRaw" rows="12" spellcheck="false"></textarea>
@@ -264,13 +331,13 @@
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-panel="env">
       <h4>运行环境</h4>
       <pre class="console" id="envInfo" style="min-height:auto"></pre>
     </div>
 
     <!-- 页面最下方：项目地址 + 当前容器要不要更新 -->
-    <div class="section">
+    <div class="section" data-panel="about">
       <h4>关于本项目</h4>
       <div class="about">
         <div class="about-line">
@@ -291,12 +358,15 @@
       <!-- 有新版本时才显示：一条在任意目录都能粘贴的更新命令（点一下可全选） -->
       <pre class="cmd" id="aboutCmd" hidden></pre>
     </div>
-
+    </div>
   </div>
-  <div class="dlg-foot"><button id="btnCloseSettings2">关闭</button></div>
+  <div class="dlg-foot"><button class="primary" id="btnCloseSettings2">完成</button></div>
 </dialog>
 
 <div class="toast" id="toast"></div>
+<!-- dropdown.js 必须先于 app.js：它往 window.DD_PROXY 里注册代理，
+     app.js 的 $() 要在初始化时就能查到这些代理。 -->
+<script src="/static/dropdown.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

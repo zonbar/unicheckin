@@ -1,4 +1,4 @@
-# unicheckin
+# unicheckin · 全能签到管理面板
 
 **签到聚合 + 网页管理后台。一条 `docker compose up -d` 跑起来，浏览器里点几下就配好了。**
 
@@ -88,6 +88,10 @@ docker compose -f docker-compose.build.yml up -d --build
 - **跑签到**：配置窗里单站跑，右上角「全部签到」跑全部；输出实时显示在右侧抽屉（可切当前任务 / 历史任务 / 日志）。
 - **定时签到**：设置页选预设或自己填 cron，保存即写入容器 crontab。面板只动自己那段带标记的区块，你别的定时任务不受影响。
 - **定时校验**：同样按 cron 定时（默认每 6 小时），只校验**已配置且有在线接口**的站点。全部有效时一声不响；有站点失效才推一条【unicheckin 校验提醒】，同一批失效 24 小时内最多提醒一次。
+- **配色主题**：顶栏一键切「自动 / 浅色 / 深色」。默认跟随系统，手动选的选择会记住，下次打开还在那一档。自动模式会跟着系统的昼夜变化切换，白天浅色、晚上深色。
+- **设置页左侧导航**：七项设置分成左右两栏，左边是分类导航（固定不动），右边只显示当前那一节。切换时弹窗尺寸固定不跳动，下次打开停在上次那一节。
+- **下拉全部自绘**：分类 / 状态 / 排序 / 日志文件 / 定时预设 / 备份选择都用自绘下拉 —— 不用原生控件弹出那层系统菜单，样式与配色统一为品牌紫，靠近窗口底部时自动向上展开且不会被裁切。
+- **推送渠道独立开关**：设置页里每个通知渠道自带「启用」开关，关掉就收起它的输入框 —— 七个渠道十来个输入框全摊开时，真正用得上的通常只有一两个。
 - **推送通知**：支持（PushPlus、企业微信、Telegram、Bark、钉钉、飞书、Gotify、ntfy、Server 酱、Qmsg），只填要用的，每种渠道一个独立方框。**一次签到恒定一条消息**：
 
 ```text
@@ -216,6 +220,21 @@ python -m panel                    # 默认监听 0.0.0.0:8080
 ```
 
 即使引擎导入失败（比如 `requests` 没装好），面板也能起来并给出提示，不会白屏。从源码构建镜像用 `docker compose -f docker-compose.build.yml up -d --build`。
+
+### 离线自测
+
+```bash
+python tools/test_engine_contract.py      # 引擎对外契约（站点 KEY / 类名 / main() 返回格式）
+python tools/test_site_behavior.py       # 站点行为（打桩网络，测解析与分支）
+python tools/test_weibo.py               # 微博超话
+python tools/test_panel_static.py        # 前端契约（静态断言）
+python tools/test_notice.py              # 通知格式
+python tools/test_schedule.py            # crontab 托管区块
+python tools/test_autoverify.py          # 定时校验
+node tools/test_frontend_runtime.js     # 前端运行时（jsdom，真跑一遍脚本）
+```
+
+最后一项需要 jsdom（`npm i jsdom`）。前六项只做文本断言，**抓不到「脚本一加载就抛异常」** —— 那类问题会让界面直接卡在「正在连接面板」，功能全废但服务端毫无线索。第七项用 jsdom 加载真实页面并执行脚本，专门兜这一类。
 
 目录：`panel/` 后台（纯标准库）、`unicheckin/` 引擎、`tools/` 离线自测、`docker/entrypoint.sh` 容器入口。
 

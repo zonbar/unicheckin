@@ -10,7 +10,7 @@
 
 :root {
   --bg: #f6f7f9;
-  --bg-glow: #e6ebfb;
+  --bg-glow: #f3f1f8;
   --surface: #ffffff;
   --surface-2: #f5f6f9;
   --surface-3: #e9ebf1;
@@ -20,9 +20,13 @@
   --fg-2: #58616f;
   --fg-3: #8b93a1;
 
-  --brand: #2f5bd7;
-  --brand-2: #2549b5;
-  --brand-soft: #edf1fe;
+  --brand: #6d4aad;
+  --brand-2: #5b3e90;
+  --brand-soft: #efebf6;
+  --brand-ink: #ffffff;   /* 品牌色底上的文字色。浅色下品牌色够深，白字即可；
+                              深色下品牌色被提亮，白字只有 3.5:1，那套要换成深色（见下） */
+  --brand-fg: #563b89;/* 品牌色作文字（链接、选中 tab）。比 --brand 再深一档，
+                              保证白底上≥4.5:1 */
   --ok: #0b7a53;
   --ok-soft: #e6f5ee;
   --bad: #cc3b33;
@@ -33,6 +37,16 @@
   --radius-lg: 14px;
   --radius: 11px;
   --radius-sm: 9px;
+  /* 间距节奏：4 的倍数。以前各处随手写 9/11/13/15px，节奏不成体系，
+     卡片与卡片之间、工具条与内容之间的间距对不上，看着就"不整齐"。
+     统一成这组 token 之后，只需要改这里就能整体调松紧。 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --gutter: 24px;              /* 页面左右留白，全站统一 */
   --shadow-1: 0 1px 2px rgba(15, 20, 32, .05);
   --shadow-2: 0 2px 4px rgba(15, 20, 32, .04), 0 12px 28px -12px rgba(15, 20, 32, .16);
   --shadow-3: 0 24px 64px -16px rgba(15, 20, 32, .26);
@@ -42,10 +56,28 @@
           "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ---- 深色主题 ----
+   变量只写这一份，三个入口共用（写在 html 上而不是某个容器上）：
+
+     1. 自动（未设 data-theme）→ @media 跟随系统
+     2. 手动深色 → [data-theme=dark]
+     3. 手动浅色 → [data-theme=light] 放在最后，
+        它把系统深色下的深色变量又覆盖回浅色那份
+
+   第3 条是关键：用户手动选了「浅色」但系统是深色时，
+   @media 那一段仍然会命中，必须有一条同等或更高优先级的规则把它压回去。
+   手动优先，所以这个选择器不带 :root，避免被媒体查询的特异性盖住。 */
+:root[data-theme="light"],
+:root[data-theme="light"] body { color-scheme: light; }
+:root[data-theme="dark"],
+:root[data-theme="dark"] body { color-scheme: dark; }
+
+/* 深色变量组。CSS 不能把一整块变量复用给两个选择器又保持各自的优先级，
+   所以这里用一份变量 + 三处引入，靠「谁写在后面谁生效」解决覆盖顺序。 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0c0e12;
-    --bg-glow: #131b2e;
+    --bg-glow: #161422;
     --surface: #14171c;
     --surface-2: #1a1e24;
     --surface-3: #22262d;
@@ -55,9 +87,11 @@
     --fg-2: #a1aab7;
     --fg-3: #737c8a;
 
-    --brand: #6b93f8;
-    --brand-2: #8aabff;
-    --brand-soft: #16203a;
+    --brand: #957dc1;
+    --brand-2: #b2a0d1;
+    --brand-soft: #1d192e;
+    --brand-ink: #1a0d2e;
+    --brand-fg: #c2b5db;
     --ok: #43c288;
     --ok-soft: #10241a;
     --bad: #f0837a;
@@ -69,6 +103,68 @@
     --shadow-2: 0 2px 5px rgba(0, 0, 0, .4), 0 14px 32px -14px rgba(0, 0, 0, .72);
     --shadow-3: 0 28px 68px -18px rgba(0, 0, 0, .8);
   }
+}
+
+/* 手动深色：不管系统是浅是深都用这套。放在 @media 之后但选择器更具体，
+   两种情况下都压得住。 */
+:root[data-theme="dark"] {
+  --bg: #0c0e12;
+  --bg-glow: #161422;
+  --surface: #14171c;
+  --surface-2: #1a1e24;
+  --surface-3: #22262d;
+  --line: #24282f;
+  --line-2: #343a43;
+  --fg: #e8ebf0;
+  --fg-2: #a1aab7;
+  --fg-3: #737c8a;
+
+  --brand: #957dc1;
+  --brand-2: #b2a0d1;
+  --brand-soft: #1d192e;
+  --brand-ink: #1a0d2e;
+  --brand-fg: #c2b5db;
+  --ok: #43c288;
+  --ok-soft: #10241a;
+  --bad: #f0837a;
+  --bad-soft: #2a1615;
+  --warn: #dcae45;
+  --warn-soft: #292310;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .45);
+  --shadow-2: 0 2px 5px rgba(0, 0, 0, .4), 0 14px 32px -14px rgba(0, 0, 0, .72);
+  --shadow-3: 0 28px 68px -18px rgba(0, 0, 0, .8);
+}
+
+/* 手动浅色：系统是深色时，把变量按浅色那份重新声明一遍压回去。
+   放在文件最后 —— 同特异性的规则，写在后面就赢。 */
+:root[data-theme="light"] {
+  --bg: #f6f7f9;
+  --bg-glow: #f3f1f8;
+  --surface: #ffffff;
+  --surface-2: #f5f6f9;
+  --surface-3: #e9ebf1;
+  --line: #e7e9ef;
+  --line-2: #d7dbe3;
+  --fg: #0e1117;
+  --fg-2: #58616f;
+  --fg-3: #8b93a1;
+
+  --brand: #6d4aad;
+  --brand-2: #5b3e90;
+  --brand-soft: #efebf6;
+  --brand-ink: #ffffff;
+  --brand-fg: #563b89;
+  --ok: #0b7a53;
+  --ok-soft: #e6f5ee;
+  --bad: #cc3b33;
+  --bad-soft: #fdecea;
+  --warn: #96690b;
+  --warn-soft: #fbf3e2;
+
+  --shadow-1: 0 1px 2px rgba(15, 20, 32, .05);
+  --shadow-2: 0 2px 4px rgba(15, 20, 32, .04), 0 12px 28px -12px rgba(15, 20, 32, .16);
+  --shadow-3: 0 24px 64px -16px rgba(15, 20, 32, .26);
 }
 
 * { box-sizing: border-box; }
@@ -179,13 +275,17 @@ button:active:not(:disabled) { transform: translateY(.5px); }
 button:disabled { opacity: .45; cursor: not-allowed; }
 button svg { flex: none; opacity: .85; }
 button.primary {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 92%, #fff), var(--brand));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--brand) 88%, var(--brand-ink)), var(--brand));
   border-color: var(--brand-2);
-  color: #fff;
+  color: var(--brand-ink);
   font-weight: 600;
   box-shadow: 0 1px 2px color-mix(in srgb, var(--brand) 40%, transparent);
 }
-button.primary:hover:not(:disabled) { background: var(--brand-2); border-color: var(--brand-2); color: #fff; }
+button.primary:hover:not(:disabled) {
+  background: var(--brand-2); border-color: var(--brand-2); color: var(--brand-ink);
+}
+button.primary:disabled { color: var(--brand-ink); }
 button.primary svg { opacity: 1; }
 button.ghost { background: transparent; border-color: transparent; color: var(--fg-3); padding: 6px 9px; }
 button.ghost:hover:not(:disabled) { background: var(--surface-3); color: var(--fg); }
@@ -248,7 +348,27 @@ select {
   color: var(--fg-3); font-size: 12.5px; gap: 5px;
 }
 .seg button:hover:not(.active) { background: transparent; color: var(--fg); }
-.seg button.active { background: var(--surface); color: var(--fg); box-shadow: var(--shadow-1); font-weight: 600; }
+/* 选中态用品牌色。原来是「白底 + 深色字」，跟没选中时只差一个背景色，
+   在浅色界面上几乎看不出选了哪个 —— 顶栏的「卡片/列表」「自动/浅色/深色」
+   都是这个控件。改成品牌色底 + 反色字，一眼可辨。
+   --brand-ink 是配套的文字色：浅色下是白字，深色下自动变深色。 */
+.seg button.active {
+  background: var(--brand); color: var(--brand-ink);
+  box-shadow: var(--shadow-1); font-weight: 600;
+}
+
+/* 深色模式：选中块用亮紫（--brand 在深色下已提亮），文字用配套的深色。
+   .seg 自身的槽底保持 surface-3 不变 —— 它比 surface 略深一点，
+   浅色/深色两套下都能和选中块分开。 */
+.seg button.active svg { opacity: 1; }
+
+/* 主题切换：三个键值（自动 / 浅色 / 深色），不是「切换」按钮，
+   所以用一个常驻的 seg 控件表达 —— 用户能看见还有哪两个可选，
+   而不是点一下才知道会变成什么。放在「全部签到」左边：外观设置属于
+   「看这个面板」的前置动作，排在主操作之前顺手。 */
+.theme-seg { flex: none; }
+.theme-seg button { padding: 5px 10px; gap: 4px; }
+.theme-seg button svg { opacity: .85; flex: none; }
 
 .chip-btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; background: var(--surface); color: var(--fg-2); }
 .chip-btn.on { background: var(--brand-soft); border-color: color-mix(in srgb, var(--brand) 34%, transparent); color: var(--brand); font-weight: 600; }
@@ -260,9 +380,8 @@ header {
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding: 12px 22px;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--gutter);
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: saturate(190%) blur(16px);
   border-bottom: 1px solid var(--line);
@@ -279,7 +398,8 @@ header {
 .dot.idle { background: var(--fg-3); }
 
 /* 统计：以前是五个各自带边框的胶囊，看着像一堆徽章；收成一条，
-   内部用发丝线分隔，数值等宽 —— 信息一样，噪音小很多。 */
+   内部用发丝线分隔，数值等宽 —— 信息一样，噪音小很多。
+   「已配置 x/y」是总量信息，和前面三个状态计数不是一类，之间多留一道间隙。 */
 .statbar {
   display: flex;
   align-items: stretch;
@@ -294,13 +414,19 @@ header {
 .stat {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 13px;
+  gap: 6px;
+  padding: 6px var(--sp-3);
   font-size: 12.5px;
   color: var(--fg-3);
   white-space: nowrap;
 }
 .stat + .stat { border-left: 1px solid var(--line); }
+/* 「还没有运行过」占位：不参与分隔线队列，和前面的计数之间要有明显的间隔 */
+.stat.muted-stat {
+  color: var(--fg-3); font-size: 12px;
+  border-left: 1px solid var(--line);
+  margin-left: var(--sp-3);
+}
 .stat i { width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); flex: none; }
 .stat b { color: var(--fg); font-weight: 620; font-size: 13px; font-variant-numeric: tabular-nums; }
 .stat em { font-style: normal; color: var(--fg-3); font-variant-numeric: tabular-nums; }
@@ -310,23 +436,41 @@ header {
 .stat.bad b { color: var(--bad); }
 .stat.warn i { background: var(--warn); }
 .stat.warn b { color: var(--warn); }
-.stat.muted-stat { color: var(--fg-3); font-size: 12px; }
 
 .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ============================ 工具条 ============================ */
+/* 这里原来把「搜索 / 视图切换 / 分类 / 状态 / 排序 / 只看待配置」六个控件平铺在
+   一行，中等宽度（1200~1400px）就会挤成一团、下拉框被压到换行。
+   改成两段：左边是「找东西」（搜索 + 视图），右边是「筛条件」（三个下拉 +
+   一个开关型按钮），两组之间用一条竖线分开，各自内部换行而不是互相推挤。 */
 .toolbar {
-  display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
-  padding: 16px 22px 4px;
+  display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap;
+  padding: var(--sp-4) var(--gutter) var(--sp-3);
 }
-.search-wrap { position: relative; width: 290px; }
+.toolbar-group {
+  display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap;
+}
+.toolbar-group.right { margin-left: auto; }
+/* 两组之间的竖分隔线：窄屏时两组各自成行，这根线也一并隐藏 */
+.toolbar-sep {
+  width: 1px; align-self: stretch; margin: 2px var(--sp-2);
+  background: var(--line); flex: none;
+}
+.search-wrap { position: relative; width: 260px; }
 .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
 .search-wrap input { padding-left: 33px; background: var(--surface); }
 .toolbar select { width: auto; font-size: 12.5px; }
 .toolbar .spacer { flex: 1 1 0; }
 
 /* ============================ 内容区 ============================ */
-main { padding: 10px 22px 22px; }
+/* 内容区收窄到 1600px：卡片一行 4 张时，每张的宽度已经接近可读下限，
+   再宽下去名字与 meta 之间会拉出大片空白，居中反而更像成品。 */
+main {
+  padding: var(--sp-1) var(--gutter) var(--sp-6);
+  max-width: 1600px;
+  margin: 0 auto;
+}
 
 /* 卡片默认一行 4 张；窗口变窄依次降到 3 / 2 / 1，断点与下面的 .list 对齐，
    两种视图切换时不会一个挤一个松。
@@ -347,7 +491,19 @@ main { padding: 10px 22px 22px; }
   position: relative;
   cursor: pointer;
 }
-.card:hover { box-shadow: var(--shadow-2); border-color: var(--line-2); transform: translateY(-1px); }
+.card:hover {
+  box-shadow: var(--shadow-2);
+  border-color: color-mix(in srgb, var(--brand) 32%, var(--line-2));
+  transform: translateY(-2px);
+}
+/* 悬停时品牌色的那道光从左侧色条上漫过来一点，给一点"可点"的暗示 */
+.card::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(420px 90px at 0% 0%,
+    color-mix(in srgb, var(--brand) 7%, transparent), transparent 70%);
+  opacity: 0; transition: opacity .18s;
+}
+.card:hover::after { opacity: 1; }
 /* 左侧一道细色条标状态。以前是 3px 实色 + 整卡描边跟着染色，绿边红边铺满一排
    看着像报错列表；现在只留 2px 的条，描边保持中性。 */
 .card::before {
@@ -358,7 +514,7 @@ main { padding: 10px 22px 22px; }
 .card[data-state=invalid]::before { background: color-mix(in srgb, var(--bad) 78%, transparent); }
 .card[data-state=unknown]::before { background: color-mix(in srgb, var(--warn) 78%, transparent); }
 
-.card-head { display: flex; align-items: center; gap: 11px; padding: 13px 15px; cursor: pointer; }
+.card-head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); cursor: pointer; }
 /* 一行四张时单个卡片会比以前窄不少：站点名和 KEY 用省略号收掉，标签/徽章不许被压变形，
    宁可让名字先截断，也不要出现「徽章被挤成两行」那种破相。 */
 .card-head .names { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
@@ -379,8 +535,10 @@ main { padding: 10px 22px 22px; }
    height 是写死的：17px 行高 + 13px 下间距 —— 这样卡片高度完全确定，一排齐平。 */
 .card-meta {
   display: block;
-  height: 30px;
-  padding: 0 15px 13px;
+  /* 17px 行高 + 12px 下间距 = 29px。改任何一个都要同步另一个，
+     tools/test_panel_static.py 里有断言守着这条等式。 */
+  height: 29px;
+  padding: 0 var(--sp-4) var(--sp-3);
   line-height: 17px;
   font-size: 11.5px;
   color: var(--fg-3);
@@ -391,10 +549,10 @@ main { padding: 10px 22px 22px; }
 
 /* ---- LOGO ---- */
 .logo {
-  flex: none; width: 38px; height: 38px; border-radius: 11px;
+  flex: none; width: 36px; height: 36px; border-radius: 10px;
   background: var(--surface-2); border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden; font-size: 19px; line-height: 1;
+  overflow: hidden; font-size: 18px; line-height: 1;
 }
 .logo.sm { width: 30px; height: 30px; border-radius: 9px; font-size: 15px; }
 .logo img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 5px; background: #fff; }
@@ -458,7 +616,7 @@ main { padding: 10px 22px 22px; }
   border-radius: var(--radius-sm); padding: 9px 11px; margin: 0 0 12px;
 }
 .howto b { color: var(--fg); }
-.howto a { color: var(--brand); text-decoration: none; }
+.howto a { color: var(--brand-fg); text-decoration: none; }
 .howto a:hover { text-decoration: underline; }
 
 .account { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; }
@@ -514,8 +672,13 @@ pre.console {
   margin: 0; font-family: var(--mono); font-size: 12px; line-height: 1.6;
   white-space: pre-wrap; word-break: break-all;
   background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 11px; min-height: 200px;
+  border-radius: var(--radius); padding: var(--sp-3); min-height: 200px;
 }
+/* section 里的代码块 / 输入框：外层已经是一块浅底方块了，
+   里面的 pre.console 再用同色 surface-2 就完全糊成一片，只能靠描边区分 ——
+   而那样就是「方块套方块」。改成提亮一档的白底，层次靠明度差而非叠加描边。 */
+.section pre.console { background: var(--surface); }
+.section textarea { background: var(--surface); }
 .overlay { position: fixed; inset: 0; background: rgba(10, 14, 22, .42); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
 .overlay.open { opacity: 1; pointer-events: auto; }
 
@@ -532,15 +695,43 @@ dialog {
   box-shadow: var(--shadow-3);
 }
 dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px); }
-.dlg-head { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.dlg-head {
+  display: flex; align-items: center;
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
 .dlg-head h3 { font-size: 15px; }
-.dlg-body { padding: 16px 18px; overflow: auto; max-height: 72vh; }
-.dlg-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 13px 18px; border-top: 1px solid var(--line); }
-.section { margin-bottom: 22px; }
-.section:last-child { margin-bottom: 6px; }
+.dlg-body { padding: var(--sp-5); overflow: auto; max-height: 72vh; }
+.dlg-foot {
+  display: flex; gap: var(--sp-2); justify-content: flex-end;
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
 
-.section h4 { margin: 0 0 9px; font-size: 13.5px; }
-.section .tip { font-size: 12px; color: var(--fg-3); margin: 6px 0 0; line-height: 1.6; }
+/* ---- 设置页的分节 ----
+   原来七个 .section 一路平铺下来，中间只有 22px 空白，视觉上就是一堵表单墙：
+   看不出「后台账号」到这里结束了、「定时签到」开始了。
+   现在每个 section 是一个带描边的独立块，块与块之间留够呼吸的空隙，
+   标题也从纯文字升成「小标题 + 说明」的两层结构。 */
+.section {
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+.section:last-child { margin-bottom: 0; }
+.section h4 {
+  display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap;
+  margin: 0 0 var(--sp-3);
+  font-size: 13.5px;
+}
+/* 标题右侧那句说明从 h4 里搬出来单独一行：原来是 muted 文字挤在标题后面，
+   标题一长就把说明顶到第二行去了，两者的基线也对不齐。 */
+.section h4 .muted { font-weight: 400; font-size: 12px; }
+.section .tip { font-size: 12px; color: var(--fg-3); margin: var(--sp-2) 0 0; line-height: 1.6; }
+/* section 里的行与行之间给点纵向呼吸，别让输入框贴着上面的说明 */
+.section .row { margin-top: var(--sp-3); }
 /* 设置页「关于本项目」里的更新命令：一行到底、可横向滚动，**不能折行** ——
    折成两行的命令粘进终端会变成两条，直接报错。点一下整条选中（复制方便）。 */
 .cmd {
@@ -558,9 +749,13 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
   user-select: all;
 }
 .cmd[hidden] { display: none; }
-/* 4 个一行的字段（后台账号）在宽弹窗里刚好排满，不留一个孤零零的半行 */
-.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; }
-.kv label { display: block; font-size: 12px; color: var(--fg-2); margin-bottom: 4px; }
+/* 表单字段网格。原来 minmax(168px) 在 800px 宽的弹窗里塞得下四列，
+   每列不到 190px —— 密码框本来就该宽一点，「当前密码 / 新密码」那两栏
+   挤成窄条看着局促。抬到 200px，让它自然落成三列，
+   「确认新密码」独占第二行的右侧也不显空。 */
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); }
+.kv label { display: block; font-size: 12px; color: var(--fg-2); margin-bottom: 5px; }
+.kv label .opt, .kv label .req { margin-left: 6px; }
 
 /* ---- 推送通知：按渠道分组的方框 ----
    以前 27 个字段平铺成一个四列网格：标签长短不一、一换行就把同一排的输入框
@@ -581,14 +776,26 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
 /* 整行铺开：无论外层是几列都占满一行（用 1 / -1 而不是 span 2，
    窄屏只剩一列时 span 2 会凭空多出一列）。 */
 .nbox.wide { grid-column: 1 / -1; }
-.nbox.on { border-color: color-mix(in srgb, var(--ok) 30%, var(--line)); }
+/* 「已配置」原来用成功绿描边。绿在这个界面里已经是「cookie 有效」的专用信号，
+   拿来表示「这个渠道填了东西」会造成语义混淆 —— 两处绿含义不同。
+   渠道级的一律用品牌紫，与「哪些状态是好的」区分开。 */
+.nbox.on { border-color: color-mix(in srgb, var(--brand) 42%, var(--line)); }
 .nbox-head { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .nbox-head b { font-size: 12.5px; font-weight: 620; letter-spacing: -.005em; }
 /* 参数个数贴着渠道名，不推到行尾 —— 整行铺开的那一组会把标题拉得很宽，
    推过去就离名字 600px 开外了，像是另一个字段。 */
 .nbox-tag { flex: none; font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); }
 .nbox-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); flex: none; }
-.nbox.on .nbox-dot { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.nbox.on .nbox-dot { background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+/* 关闭态：整体压暗一点，和打开的渠道拉开层次。
+   字段区已经 hidden 了，这里只处理标题行与状态行。 */
+.nbox.off { background: var(--surface); }
+.nbox.off .nbox-head b { color: var(--fg-3); font-weight: 500; }
+.nbox.off .nbox-dot { background: var(--line-2); box-shadow: none; }
+/* 标题行右边的开关推到行尾：渠道名和「N 项」在左，开关在右，
+   中间留白由 flex 的 margin-left:auto 撑开。 */
+.nbox-sw { margin-left: auto; flex: none; font-size: 11.5px; color: var(--fg-3); }
+.nbox.off .nbox-sw { opacity: .8; }
 .nbox-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 8px 9px; }
 .nf { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .nf-top { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
@@ -604,7 +811,7 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
    嫌挤，已经删掉 —— .app-foot / .foot-box / .foot-line 那套随之去掉，别再加回来。
    .foot-repo / .foot-up / .up-dot 就是「一行小字 + 一个状态圆点」的公共零件。 */
 .foot-repo { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--fg-2); text-decoration: none; }
-.foot-repo:hover { color: var(--brand); }
+.foot-repo:hover { color: var(--brand-fg); }
 .foot-repo svg { flex: none; color: var(--fg-3); }
 /* 仓库名可能被 PANEL_REPO 换成更长的 fork 名，窄屏就省略号 + title 兜底 */
 .foot-repo b { font-size: 12px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -616,22 +823,121 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
 .up-dot.warn { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
 
 /* ---- 设置页底部的「关于本项目」 ---- */
+/* section 本身已经是一块带描边的浅底方块了，里面的 .about 再描一道边就成了
+   「方块里的方块」，看着多了一层。改成只用背景分层（surface 提亮一档）。 */
 .about {
-  display: flex; flex-direction: column; gap: 9px;
-  padding: 11px 13px;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  padding: var(--sp-3);
   border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface-2);
+  background: var(--surface);
 }
 .about-line { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 12.5px; color: var(--fg-2); }
+
+/* ---- 设置页：左导航 + 右内容 ----
+   原来七节平铺下来就是一堵表单墙，用户得上下滚才能找到「定时校验」在哪。
+   改成两栏：左边是分类导航（固定不动），右边只显示当前那一节。
+   好处不只是省滚动 —— 一屏只看一件事，不会被上面几节的输入框干扰。 */
+.settings-body {
+  display: grid;
+  grid-template-columns: 188px minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+  max-height: none;
+  overflow: hidden;
+}
+.settings-nav {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--sp-4) var(--sp-3);
+  border-right: 1px solid var(--line);
+  background: var(--surface-2);
+  overflow-y: auto;
+}
+.settings-nav .nav-group {
+  margin: var(--sp-3) 0 var(--sp-1);
+  padding: 0 var(--sp-2);
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: .07em; text-transform: uppercase;
+  color: var(--fg-3);
+}
+.settings-nav .nav-group:first-child { margin-top: 0; }
+.settings-nav button {
+  display: flex; align-items: center; gap: var(--sp-2);
+  width: 100%; padding: 7px var(--sp-2);
+  border: none; background: transparent; border-radius: var(--radius-sm);
+  color: var(--fg-2); font-size: 13px; text-align: left;
+  transition: background .15s, color .15s;
+}
+.settings-nav button svg { flex: none; opacity: .8; }
+.settings-nav button:hover { background: var(--surface-3); color: var(--fg); }
+.settings-nav button.active {
+  background: var(--surface); color: var(--fg); font-weight: 600;
+  box-shadow: var(--shadow-1);
+}
+.settings-nav button.active svg { opacity: 1; color: var(--brand-fg); }
+
+/* 右侧内容区：只滚动这一块，左边导航永远在视线里 */
+/* 右侧内容区：只滚动这一块，左边导航永远在视线里。
+
+   高度必须写死，不能让它跟着内容走 —— 七个面板高度差极大
+   （config.json 有 textarea、运行环境有一大坨输出，后台账号只有几个输入框）。
+   容器跟着内容伸缩的话，切换时弹窗会一会儿高一会儿矮，
+   眼睛得重新找按钮在哪儿。固定之后无论切到哪一节，弹窗都是同一个尺寸，
+   只是里面的内容在滚动。 */
+.settings-panes {
+  padding: var(--sp-5);
+  overflow-y: auto;
+}
+.settings-panes > .section { margin-bottom: 0; }
+.settings-panes > .section.hidden { display: none; }
+
+/* 单栏时导航压成横向一排（窄屏 / 手机）。
+   注意不能给 .settings-body 开 overflow:auto —— 它是外层 flex 的一格，
+   开了就等于把「滚动职责」从 .settings-panes 抢回来，两层都能滚，
+   手机上会出现两层滚动条互相打架。单栏时让 nav 固定、panes 继续滚。 */
+@media (max-width: 720px) {
+  .settings-body { grid-template-columns: 1fr; overflow: hidden; }
+  .settings-nav {
+    flex-direction: row; flex-wrap: wrap;
+    border-right: none; border-bottom: 1px solid var(--line);
+    padding: var(--sp-2);
+  }
+  .settings-nav .nav-group { width: 100%; margin: var(--sp-2) 0 2px; }
+  .settings-nav button { width: auto; }
+  .settings-panes { padding: var(--sp-4) var(--gutter); }
+}
 
 /* ---- 站点配置弹窗 ---- */
 /* 整块做成「头 / 可滚内容 / 底栏」三段的 flex：cookie 框再长也只滚中间那块，
    底栏的「保存」永远在视线里，不用滚到底才能点。
    注意必须写成 [open]：无条件 display:flex 会盖掉浏览器默认的
    dialog:not([open]) { display: none }，弹窗一上来就摊在那儿。 */
-#siteDlg { width: min(780px, 94vw); }
-#siteDlg[open] { display: flex; flex-direction: column; max-height: 88vh; }
-#siteDlg .dlg-body { max-height: none; flex: 1; }
+/* 同样写死高度：站点配置弹窗的内容长度差异比设置页更大
+   （cookie 站点 vs 表单站点 vs 没配过的站），逐个点开时弹窗会忽高忽低，
+   底栏的「保存」也跟着上下跳。固定后底栏永远在同一个位置。 */
+#siteDlg { width: min(780px, 94vw); height: 88vh; max-height: 88vh; }
+#siteDlg[open] { display: flex; flex-direction: column; }
+#siteDlg .dlg-body { max-height: none; flex: 1; min-height: 0; }
+
+/* 设置页同样处理：内容有七节、很长，底栏只放「关闭」，
+   但它必须在视线里 —— 否则用户滚到「运行环境」那一大坨输出时，
+   想关窗得一路滚回顶部。 */
+/* 两栏布局需要横向空间：760 → 920px。dlg-body 交给 .settings-body 自己管，
+   外层只负责给它高度（flex: 1），滚动由右侧那一栏负责。
+
+   高度用 height 而不是 max-height —— 后者会跟着内容伸缩，
+   七个面板高度差一大，切换时弹窗就会「跳」。写死 + overflow 处理，
+   切换才不会有视觉位移。内容真的很少时（后台账号）下边框有些空，
+   但尺寸稳定比填满每一像素重要。 */
+#settings { width: min(920px, 95vw); height: 88vh; max-height: 88vh; }
+#settings[open] { display: flex; flex-direction: column; }
+#settings .dlg-body { max-height: none; flex: 1; min-height: 0; }
+#settings .dlg-head {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface);
+}
+/* 头部原来右边放「关闭」，左边只剩一个 h3 会显得头重脚轻。
+   加一句副标题说明这个弹窗管什么，视觉上补上右侧的空。 */
+#settings .dlg-head .head-sub { font-size: 12.5px; }
 #siteDlg .dlg-foot { justify-content: flex-start; }
 
 .sd-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -643,7 +949,7 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 16px; }
 .tabs button { border: none; background: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 9px 11px; color: var(--fg-3); font-weight: 500; }
 .tabs button:hover:not(.active) { background: transparent; color: var(--fg); }
-.tabs button.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 620; }
+.tabs button.active { color: var(--brand-fg); border-bottom-color: var(--brand); font-weight: 620; }
 
 /* ============================ 提示 ============================ */
 .toast {
@@ -671,8 +977,14 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
 }
 @media (max-width: 1020px) {
   /* 顶栏挤不下时，统计条整条换到第二行，别被拆成两半 */
+  header { flex-wrap: wrap; }
   .statbar { order: 3; width: 100%; }
   .stat { flex: 1 1 0; justify-content: center; }
+}
+@media (max-width: 900px) {
+  /* 工具条两组之间的竖线在堆叠成两行后没有意义了 */
+  .toolbar-sep { display: none; }
+  .toolbar-group.right { margin-left: 0; width: 100%; }
 }
 @media (max-width: 860px) {
   .row-item { grid-template-columns: 34px minmax(0, 1fr) 84px auto; }
@@ -682,9 +994,9 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
   .grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
-  header { padding: 11px 14px; gap: 12px; }
+  header { padding: 11px var(--gutter); gap: var(--sp-3); }
   .statbar { display: none; }
-  main, .toolbar { padding-left: 14px; padding-right: 14px; }
+  main, .toolbar { padding-left: var(--gutter); padding-right: var(--gutter); }
   .search-wrap { width: 100%; }
   .actions { margin-left: 0; width: 100%; }
   .drawer { width: 100vw; }
@@ -693,3 +1005,86 @@ dialog::backdrop { background: rgba(10, 14, 22, .5); backdrop-filter: blur(3px);
   #siteDlg { width: 100vw; max-height: 100dvh; border-radius: 0; }
   #siteDlg .dlg-body { padding: 14px; }
 }
+
+@media (max-width: 560px) {
+  /* 手机上 24px 的左右留白太奢侈，卡片本来就窄，再留白就没法看了 */
+  :root { --gutter: 14px; }
+}
+
+/* ======================================================================
+   自绘下拉
+   ====================================================================== */
+/* 升级后的原生 select 只当数据源，视觉上完全藏起来。
+   不能 display:none —— 那会让部分浏览器读不到它的 value；
+   用「绝对定位挪到视野外」既隐藏又不脱离布局计算。 */
+select.dd-native {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+  margin: 0; padding: 0; border: 0;
+}
+.dd { position: relative; display: inline-block; min-width: 0; }
+.dd-btn {
+  display: flex; align-items: center; gap: var(--sp-2);
+  width: 100%; padding: 7px 9px 7px 11px;
+  background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line-2); border-radius: var(--radius-sm);
+  font-size: 13px; text-align: left;
+  transition: border-color .15s, background .15s;
+}
+.dd-btn:hover { border-color: var(--fg-3); }
+.dd-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--brand) 46%, transparent); outline-offset: 1px; }
+.dd-label {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dd-caret {
+  width: 13px; height: 13px; flex: none;
+  color: var(--fg-3);
+  transition: transform .18s, color .15s;
+}
+.dd.open .dd-caret { transform: rotate(180deg); color: var(--brand-fg); }
+.dd.open .dd-btn { border-color: color-mix(in srgb, var(--brand) 55%, var(--line-2)); }
+
+/* 列表：贴着按钮展开的一层，不是系统弹窗。
+   靠近窗口底部时 .dd.up 让它向上展开（由 JS 判断空间）。 */
+/* 弹出层在打开时被移到 <body> 下（见 dropdown.js::attachMenu），
+   所以这里不用绝对定位：位置由 JS 按按钮的实际坐标写成 inline style。
+   挂到 body 是为了脱离 .settings-panes / .drawer-body 的 overflow 裁切 ——
+   那些容器 overflow-y:auto，弹出层留在里面向上展开时顶部会被切掉。
+
+   注意 z-index 要高于 header(20) 和 drawer，否则会被压住。
+   收起用 .dd-open-on-body 这个类做状态标记（菜单不在 .dd 里了，
+   不能再靠 .dd.open .dd-menu 这样的后代选择器）。 */
+.dd-menu {
+  display: none;
+  position: fixed; z-index: 60;
+  max-height: 260px; overflow-y: auto;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+}
+.dd-menu.on { display: block; }
+.dd-item {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 13px; color: var(--fg-2);
+  cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dd-item:hover, .dd-item:focus { background: var(--surface-3); color: var(--fg); outline: none; }
+/* 选中态用品牌紫：与 .seg 的选中态同一套语言 */
+.dd-item.sel {
+  background: var(--brand-soft);
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+/* 尺寸对齐原来那些 select 的行内样式（width:auto / max-width:240px）*/
+.toolbar .dd { width: auto; }
+.toolbar .dd-btn { font-size: 12.5px; padding: 7px 8px 7px 10px; }
+.row .dd-btn, .dd-compact .dd-btn { font-size: 12.5px; padding: 5px 8px 5px 10px; }
+.dd-wide { max-width: 240px; }
+.dd-wide .dd-menu { min-width: 100%; }  /* 宽度由 JS 按按钮对齐 */
