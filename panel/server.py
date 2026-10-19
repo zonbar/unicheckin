@@ -485,7 +485,7 @@ HANDLERS = {}
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "Uni-Check-in-panel/" + PANEL_VERSION
+    server_version = "unicheckin-panel/" + PANEL_VERSION
     protocol_version = "HTTP/1.1"
 
     # ----- 基础 -----

@@ -49,7 +49,7 @@ jobs:
           context: .
           load: true
           push: false
-          tags: Uni-Check-in:ci
+          tags: unicheckin:ci
           build-args: |
             GIT_COMMIT=${{ steps.stamp.outputs.sha }}
             GIT_DATE=${{ steps.stamp.outputs.date }}
@@ -65,7 +65,7 @@ jobs:
             -v "$PWD/cron:/unicheckin/cron" \
             -v "$PWD/logs:/unicheckin/logs" \
             -v "$PWD/data:/unicheckin/data" \
-            Uni-Check-in:ci
+            unicheckin:ci
           for i in $(seq 1 40); do
             if curl -fsS -H "X-Panel-Token: ci-secret" http://127.0.0.1:18080/api/health >/dev/null; then
               echo "面板已就绪（第 $i 次探测）"; break
@@ -82,7 +82,7 @@ jobs:
           head -5 config/config.json
           echo "--- crontab 内容"
           docker exec dc-ci crontab -l | tee /tmp/cron.txt
-          grep -q "Uni-Check-in managed" /tmp/cron.txt
+          grep -q "unicheckin managed" /tmp/cron.txt
 
       - name: 健康检查与口令保护
         run: |
@@ -90,7 +90,7 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/api/state)
           test "$code" = "401" || { echo "无口令应返回 401，实际 $code"; exit 1; }
           curl -fsS -H "X-Panel-Token: ci-secret" http://127.0.0.1:18080/api/state -o state.json
-          curl -fsS http://127.0.0.1:18080/ | grep -q "Uni-Check-in"
+          curl -fsS http://127.0.0.1:18080/ | grep -q "unicheckin"
           curl -fsS http://127.0.0.1:18080/static/app.js > /dev/null
           curl -fsS http://127.0.0.1:18080/api/auth/status -o auth-status.json
           python3 -c "import json;st=json.load(open('state.json',encoding='utf-8'));assert st['panel']['token_bypass'] is True,st['panel'];assert st['engine']['ok'] is True,st['engine'];assert len(st['sites'])>=16,len(st['sites']);print('引擎版本',st['engine']['version'],'| 站点数',len(st['sites']))"

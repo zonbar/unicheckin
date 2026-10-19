@@ -1,4 +1,4 @@
-/* Uni-Check-in 签到管理面板 —— 无框架、无构建步骤的纯前端 */
+/* unicheckin 签到管理面板 —— 无框架、无构建步骤的纯前端 */
 (() => {
   "use strict";
 
@@ -320,7 +320,7 @@
     if (!S.state) return;
     const panel = S.state.panel || {};
     const engine = S.state.engine || {};
-    const name = panel.title || "Uni-Check-in";
+    const name = panel.title || "unicheckin";
     $("panelTitle").textContent = name;
     document.title = `${name} · 签到管理面板`;
     $("panelVersion").textContent = panel.version || "";

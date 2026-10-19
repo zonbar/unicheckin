@@ -3,7 +3,7 @@
 
 重点是**改项目名之后老部署不能出问题**：
 面板只维护自己那段带标记的区块，标记从 `unicheckin-compose managed` 换成了
-`Uni-Check-in managed`。老用户的 crontab 里还是老标记，
+`unicheckin managed`。老用户的 crontab 里还是老标记，
 如果不认它，面板会以为「这段不是我管的」，再追加一段新的签到任务 ——
 结果就是一天跑两遍、TG 收到两条通知。这里把这条路堵死并锁进测试。
 
@@ -74,8 +74,8 @@ LEGACY = (
 print("=" * 66)
 print("crontab 托管区块：改名后老标记仍要认，且升级成一整段")
 
-# 1) 新标记是 Uni-Check-in
-check("托管标记用的是新项目名", schedule.BEGIN == "# >>> Uni-Check-in managed >>>", schedule.BEGIN)
+# 1) 新标记是 unicheckin
+check("托管标记用的是新项目名", schedule.BEGIN == "# >>> unicheckin managed >>>", schedule.BEGIN)
 check("老标记进了兼容清单", "unicheckin-compose" in schedule.MANAGED_MARKERS, schedule.MANAGED_MARKERS)
 
 # 2) 文件不存在时，默认内容就是新标记
@@ -125,7 +125,7 @@ schedule.set_schedule(True, "0 9 * * *")
 text = read()
 check("裸调用被包进新的托管区块", text.count("managed >>>") == 1, text)
 check("接管后只剩一个真实签到调用", len(active_calls(text)) == 1, text)
-check("裸调用原文被注释留档", "# 已由 Uni-Check-in 面板接管" in text, text)
+check("裸调用原文被注释留档", "# 已由 unicheckin 面板接管" in text, text)
 block_body = schedule.BLOCK_RE.search(text).group(1)
 check("唯一的真实调用就在托管区块里", all(l in block_body for l in active_calls(text)), text)
 

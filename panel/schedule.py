@@ -3,9 +3,9 @@
 面板只维护 crontab 文件里的一段**带标记的区块**，其余行原样保留，
 所以用户自己写的其它定时任务不会被覆盖：
 
-    # >>> Uni-Check-in managed >>>
+    # >>> unicheckin managed >>>
     0 9 * * * cd /unicheckin && unicheckin >> /unicheckin/logs/unicheckin.log 2>&1
-    # <<< Uni-Check-in managed <<<
+    # <<< unicheckin managed <<<
 
 老项目名（unicheckin-compose）留下的标记照样认，写回时会顺手升级成新标记。
 不这么做的话，老部署里那段「没人认领」的签到任务会和新加的一段并存 ——
@@ -22,7 +22,7 @@ import subprocess
 from . import paths
 
 # 第一项是当前使用的标记，后面的都是历史名字（只读兼容，写回时统一升级）
-MANAGED_MARKERS = ("Uni-Check-in", "unicheckin-compose")
+MANAGED_MARKERS = ("unicheckin", "unicheckin-compose")
 BEGIN = f"# >>> {MANAGED_MARKERS[0]} managed >>>"
 END = f"# <<< {MANAGED_MARKERS[0]} managed <<<"
 
@@ -160,7 +160,7 @@ def set_schedule(enabled: bool, cron: str) -> dict:
         lines = []
         for line in text.splitlines():
             if _is_bare_checkin(line):
-                lines.append(f"# 已由 Uni-Check-in 面板接管（原文留档）：{line.strip()}")
+                lines.append(f"# 已由 unicheckin 面板接管（原文留档）：{line.strip()}")
             else:
                 lines.append(line)
         text = "\n".join(lines)

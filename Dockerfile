@@ -1,5 +1,5 @@
-# 自定义镜像：Uni-Check-in —— 签到引擎 + 网页管理后台
-# 签到引擎 + 网页管理面板。镜像推 ghcr.io/zonbar/uni-check-in
+# 自定义镜像：unicheckin —— 签到引擎 + 网页管理后台
+# 签到引擎 + 网页管理面板。镜像推 ghcr.io/zonbar/unicheckin
 FROM python:3.9-slim
 
 ENV LANG=C.UTF-8 \
@@ -33,7 +33,7 @@ RUN set -eux; \
     grep -q 'web-interface/newlist' "$(python -c 'import unicheckin.bilibili.main as m; print(m.__file__)')"; \
     echo 'B 站接口修复已生效'; \
     python -c "import pathlib as p; s = p.Path('unicheckin/main.py').read_text(encoding='utf-8'); assert 'PROJECT_URL' in s and 'PROJECT_NAME' in s, 'main.py 的引擎元信息没跟上'; print('引擎元信息自检通过')"; \
-    python -c "import unicheckin.utils.message as m; assert m.PROJECT_NAME == 'Uni-Check-in', m.PROJECT_NAME; assert m.NOTICE_TITLE.endswith('每日签到') and m.PROJECT_NAME in m.NOTICE_TITLE, m.NOTICE_TITLE; assert m.PROJECT_URL.endswith('/Uni-Check-in'), m.PROJECT_URL; print('通知模块自检通过：', m.NOTICE_TITLE, m.PROJECT_URL)"; \
+    python -c "import unicheckin.utils.message as m; assert m.PROJECT_NAME == 'unicheckin', m.PROJECT_NAME; assert m.NOTICE_TITLE.endswith('每日签到') and m.PROJECT_NAME in m.NOTICE_TITLE, m.NOTICE_TITLE; assert m.PROJECT_URL.endswith('/unicheckin'), m.PROJECT_URL; print('通知模块自检通过：', m.NOTICE_TITLE, m.PROJECT_URL)"; \
     echo '通知模块修复已生效（恒定一条 + 标题带项目名 + 本项目地址）'; \
     cd / && rm -rf /build
 
@@ -43,8 +43,8 @@ COPY panel ./panel
 # 网页里的品牌字样也断言一次：装进镜像的必须是改名后的版本，
 # 别出现「源码改了名字、镜像里还是老页面」这种事。
 RUN set -eux; \
-    grep -q 'Uni-Check-in' panel/static/index.html; \
-    grep -q 'Uni-Check-in' panel/paths.py; \
+    grep -q 'unicheckin' panel/static/index.html; \
+    grep -q 'unicheckin' panel/paths.py; \
     echo '面板品牌自检通过'
 
 # 溯源信息：面板「设置 → 环境信息」里显示的引擎版本/上游提交就来自这里，

@@ -10,8 +10,8 @@ import requests
 
 # 本项目的标识。通知标题、企业微信卡片里回跳的地址都取自这里，
 # 不再像上游那样在好几处分别写死同一个链接。改项目名只需要动这两行。
-PROJECT_NAME = "Uni-Check-in"
-PROJECT_URL = "https://github.com/beacherz/Uni-Check-in"
+PROJECT_NAME = "unicheckin"
+PROJECT_URL = "https://github.com/beacherz/unicheckin"
 
 # 各站点签到结果之间的分隔行。用全角破折号：所有推送渠道都能正常显示，
 # 不会被当成 markdown 语法，也不会像方块字符那样在不同字体下变成乱码。
@@ -263,7 +263,7 @@ def message2ntfy(
 
 def important_notice():
     datas = requests.get(
-        url="https://api.github.com/repos/zonbar/Uni-Check-in/issues?state=open&labels=通知",
+        url="https://api.github.com/repos/zonbar/unicheckin/issues?state=open&labels=通知",
         timeout=15,
     ).json()
     if datas:

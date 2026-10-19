@@ -1,6 +1,6 @@
 services:
   unicheckin:
-    image: ghcr.io/zonbar/uni-check-in:latest
+    image: ghcr.io/zonbar/unicheckin:latest
     container_name: unicheckin
     restart: unless-stopped
     ports:

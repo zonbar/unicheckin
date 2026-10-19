@@ -1,9 +1,9 @@
-# Uni-Check-in
+# unicheckin
 
 **签到聚合 + 网页管理后台。一条 `docker compose up -d` 跑起来，浏览器里点几下就配好了。**
 
-[![build](https://github.com/zonbar/Uni-Check-in/actions/workflows/build.yml/badge.svg)](https://github.com/zonbar/Uni-Check-in/actions/workflows/build.yml)
-[![ghcr](https://img.shields.io/badge/ghcr.io-uni--check--in-2496ed?logo=docker&logoColor=white)](https://github.com/zonbar/Uni-Check-in/pkgs/container/uni-check-in)
+[![build](https://github.com/zonbar/unicheckin/actions/workflows/build.yml/badge.svg)](https://github.com/zonbar/unicheckin/actions/workflows/build.yml)
+[![ghcr](https://img.shields.io/badge/ghcr.io-unicheckin-2496ed?logo=docker&logoColor=white)](https://github.com/zonbar/unicheckin/pkgs/container/unicheckin)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 签到引擎与网页管理面板均为本项目实现，按 MIT 发布。
@@ -29,7 +29,7 @@
 ```yaml
 services:
   unicheckin:
-    image: ghcr.io/zonbar/uni-check-in:latest
+    image: ghcr.io/zonbar/unicheckin:latest
     container_name: unicheckin
     restart: unless-stopped
     ports:
@@ -87,11 +87,11 @@ docker compose -f docker-compose.build.yml up -d --build
   > 「跑通」不等于「有效」：不少模块遇到无效 cookie 是**静默返回**的（比如 B 站 `main()` 开头就 `if is_login:` 直接跳过），所以接口判定为 ❌ 的站点，跑签到没报错也继续标 ❌。
 - **跑签到**：配置窗里单站跑，右上角「全部签到」跑全部；输出实时显示在右侧抽屉（可切当前任务 / 历史任务 / 日志）。
 - **定时签到**：设置页选预设或自己填 cron，保存即写入容器 crontab。面板只动自己那段带标记的区块，你别的定时任务不受影响。
-- **定时校验**：同样按 cron 定时（默认每 6 小时），只校验**已配置且有在线接口**的站点。全部有效时一声不响；有站点失效才推一条【Uni-Check-in 校验提醒】，同一批失效 24 小时内最多提醒一次。
+- **定时校验**：同样按 cron 定时（默认每 6 小时），只校验**已配置且有在线接口**的站点。全部有效时一声不响；有站点失效才推一条【unicheckin 校验提醒】，同一批失效 24 小时内最多提醒一次。
 - **推送通知**：支持（PushPlus、企业微信、Telegram、Bark、钉钉、飞书、Gotify、ntfy、Server 酱、Qmsg），只填要用的，每种渠道一个独立方框。**一次签到恒定一条消息**：
 
 ```text
-【Uni-Check-in 每日签到】
+【unicheckin 每日签到】
 
 「V2EX 论坛」
 帐号信息: ABC
@@ -105,7 +105,7 @@ docker compose -f docker-compose.build.yml up -d --build
 ————————————
 
 任务用时: 1 秒
-项目地址: https://github.com/zonbar/Uni-Check-in
+项目地址: https://github.com/zonbar/unicheckin
 ```
 
 - **设置页**：后台账号密码 / `config.json` 原文编辑（语法错拒绝保存，每次保存前自动留时间戳备份，最多 30 份可一键恢复）/ 关于本项目。
@@ -159,11 +159,11 @@ cookie 等于账号密码，**别外发** —— 它只存在你本机的 `confi
 |---|---|---|
 | `TZ` | `Asia/Shanghai` | 时区，影响定时任务时间 |
 | `PANEL_PORT` | `8080` | 容器内监听端口（改这个要同步改 compose 映射） |
-| `PANEL_TITLE` | `Uni-Check-in` | 浏览器标签 + 顶栏的品牌名 |
+| `PANEL_TITLE` | `unicheckin` | 浏览器标签 + 顶栏的品牌名 |
 | `PANEL_USERNAME` / `PANEL_PASSWORD` | 空 | 想跳过「首次打开手动设账号」时填，只在后台还没初始化时生效 |
 | `PANEL_TOKEN` | 空 | 可选的脚本口令，给 curl / 自动化用（`X-Panel-Token` 头或 `?token=`），**不能替代登录**，别开在公网 |
 | `PANEL_RUN_TIMEOUT` | `1800` | 单次签到任务超时秒数 |
-| `PANEL_REPO` | `zonbar/Uni-Check-in` | 「关于本项目」里的链接、以及「要不要更新」的比对对象 |
+| `PANEL_REPO` | `zonbar/unicheckin` | 「关于本项目」里的链接、以及「要不要更新」的比对对象 |
 | `PANEL_GH_TOKEN` | 空 | 访问 GitHub 接口时带上它，避免匿名限流（60 次/小时/IP） |
 | `DC_HOME` | `/unicheckin` | 工作目录，一般不用改 |
 
@@ -192,7 +192,7 @@ python3 tools/test_autoverify.py       # 定时校验：cron 算法、只在失�
 ```
 
 镜像由 GitHub Actions 构建：推 `main` 会跑冒烟测试再发布到
-`ghcr.io/zonbar/uni-check-in`；提 PR 只跑测试不发布。
+`ghcr.io/zonbar/unicheckin`；提 PR 只跑测试不发布。
 
 ## 常见问题
 

@@ -10,7 +10,7 @@ DESCRIPTION = "签到聚合 + 网页管理面板"
 EMAIL = "zonbar@users.noreply.github.com"
 AUTHOR = "zonbar"
 REQUIRES_PYTHON = ">=3.9.0"
-URL = "https://github.com/zonbar/Uni-Check-in"
+URL = "https://github.com/zonbar/unicheckin"
 VERSION = None
 
 

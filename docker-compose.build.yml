@@ -4,7 +4,7 @@
 services:
   unicheckin:
     build: .
-    image: uni-check-in:local
+    image: unicheckin:local
     container_name: unicheckin
     restart: unless-stopped
     ports:

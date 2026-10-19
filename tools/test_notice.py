@@ -94,9 +94,9 @@ check("项目地址指向本项目", message.PROJECT_URL in body, message.PROJEC
 check("正文里只出现本项目地址", "api.github.com/repos/Sitoi" not in body, body[-120:])
 
 # 2.1) 项目名：常量、通知标题、企业微信卡片署名都得是新名字
-check("PROJECT_NAME 是 Uni-Check-in", message.PROJECT_NAME == "Uni-Check-in", message.PROJECT_NAME)
-check("项目地址是新仓库", message.PROJECT_URL.endswith("/Uni-Check-in"), message.PROJECT_URL)
-check("兜底标题带项目名", message.NOTICE_TITLE == "Uni-Check-in 每日签到", message.NOTICE_TITLE)
+check("PROJECT_NAME 是 unicheckin", message.PROJECT_NAME == "unicheckin", message.PROJECT_NAME)
+check("项目地址是新仓库", message.PROJECT_URL.endswith("/unicheckin"), message.PROJECT_URL)
+check("兜底标题带项目名", message.NOTICE_TITLE == "unicheckin 每日签到", message.NOTICE_TITLE)
 check("标题里有项目名", message.PROJECT_NAME in TITLE, TITLE)
 check("正文首行的标题带项目名", body.startswith(f"【{message.PROJECT_NAME}"), repr(body[:60]))
 check("通知里不再出现旧项目名", "unicheckin-compose" not in body, body[:120])
