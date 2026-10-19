@@ -21,12 +21,12 @@ def main() -> int:
     with open(config_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    from dailycheckin.configs import get_notice_info
-    from dailycheckin.utils.message import push_message
-    import dailycheckin
+    from unicheckin.configs import get_notice_info
+    from unicheckin.utils.message import push_message
+    import unicheckin
 
     # 打一行模块路径：万一 sys.path 让 site-packages 里的旧引擎抢先，日志里一眼能看出来
-    print("引擎模块:", dailycheckin.__file__)
+    print("引擎模块:", unicheckin.__file__)
 
     blocks = [str(one) for one in (payload.get("blocks") or []) if str(one or "").strip()]
     if not blocks:

@@ -116,7 +116,7 @@ def latest() -> dict:
     """问 GitHub：main 上最新一次提交是什么。失败就抛，由 check() 兜。"""
     req = urllib.request.Request(API, method="GET")
     req.add_header("Accept", "application/vnd.github+json")
-    req.add_header("User-Agent", "dailycheckin-plus-panel")
+    req.add_header("User-Agent", "Uni-Check-in-panel")
     token = os.environ.get("PANEL_GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
     if token.strip():
         req.add_header("Authorization", "Bearer " + token.strip())

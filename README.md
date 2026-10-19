@@ -6,8 +6,8 @@
 [![ghcr](https://img.shields.io/badge/ghcr.io-uni--check--in-2496ed?logo=docker&logoColor=white)](https://github.com/zonbar/Uni-Check-in/pkgs/container/uni-check-in)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-签到引擎最初来自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（MIT），
-**网页后台、微博超话签到与 Docker 编排为本项目新增**，同样以 MIT 发布。
+签到引擎最初改编自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（MIT），
+现已重构为独立实现，版权归 zonbar，按 MIT 发布。致谢见 [LICENSE](LICENSE)。
 
 ![后台效果图](index.png)
 
@@ -29,17 +29,17 @@
 
 ```yaml
 services:
-  dailycheckin:
+  unicheckin:
     image: ghcr.io/zonbar/uni-check-in:latest
-    container_name: dailycheckin
+    container_name: unicheckin
     restart: unless-stopped
     ports:
       - 8080:8080
     volumes:
-      - ./config:/dailycheckin/config
-      - ./cron:/dailycheckin/cron
-      - ./logs:/dailycheckin/logs
-      - ./data:/dailycheckin/data
+      - ./config:/unicheckin/config
+      - ./cron:/unicheckin/cron
+      - ./logs:/unicheckin/logs
+      - ./data:/unicheckin/data
     environment:
       - TZ=Asia/Shanghai
 ```
@@ -53,7 +53,7 @@ docker compose up -d
 **升级**：两行一起复制粘贴，在**任意目录**跑都行 —— 第一行先从容器标签里问出 compose 文件在哪，第二行再跳过去更新：
 
 ```bash
-D=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' dailycheckin)
+D=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' unicheckin)
 cd "$D" && docker compose pull && docker compose up -d
 ```
 
@@ -166,18 +166,18 @@ cookie 等于账号密码，**别外发** —— 它只存在你本机的 `confi
 | `PANEL_RUN_TIMEOUT` | `1800` | 单次签到任务超时秒数 |
 | `PANEL_REPO` | `zonbar/Uni-Check-in` | 「关于本项目」里的链接、以及「要不要更新」的比对对象 |
 | `PANEL_GH_TOKEN` | 空 | 访问 GitHub 接口时带上它，避免匿名限流（60 次/小时/IP） |
-| `DC_HOME` | `/dailycheckin` | 工作目录，一般不用改 |
+| `DC_HOME` | `/unicheckin` | 工作目录，一般不用改 |
 
 纯 Python 标准库实现，**零框架依赖**，x86 / arm64 / armv7 都能跑；后台密码只存 PBKDF2 派生值 + 随机盐，会话是签名票据（面板重启不掉线）；登录失败按 IP 限速。
 
 ## 引擎与开发
 
-引擎源码**内置**在 `dailycheckin/`，不从 PyPI 装：构建可复现、离线能编译。
+引擎源码**内置**在 `unicheckin/`，不从 PyPI 装：构建可复现、离线能编译。
 
 新增一个签到站点只要两步，**不需要改任何注册表** —— 引擎用 `pkgutil.walk_packages`
 自动扫描目录，面板也从引擎动态读取站点清单：
 
-1. 建 `dailycheckin/<key>/__init__.py`（空文件）与 `dailycheckin/<key>/main.py`，
+1. 建 `unicheckin/<key>/__init__.py`（空文件）与 `unicheckin/<key>/main.py`，
    写一个继承 `CheckIn` 的类，`name` 是中文站名，`main()` 返回签到结果文本；
 2. 在 `panel/catalog.py` 补一段元数据（站名、图标、分类、必填 cookie 字段、
    可选配置项）—— 不补也能用，只是没有必填提示和在线校验按钮。
@@ -200,8 +200,8 @@ python3 tools/test_autoverify.py       # 定时校验：cron 算法、只在失�
 **想挂到公网？**
 ① 登录后台设好账号密码（默认就要求登录，别关）；② 前面套一层 HTTPS 反向代理（Nginx / Caddy / Traefik）—— 会话票据是 Bearer 语义，明文 HTTP 有被截获的风险。反代记得转发 `X-Forwarded-Proto`，面板会据此给 cookie 加 `Secure`。
 
-**从官方镜像 `sitoi/dailycheckin` 迁过来要做什么？**
-先停掉旧容器 —— 本项目容器名也叫 `dailycheckin`，不清理会撞名：`docker stop dailycheckin && docker rm dailycheckin`。然后把原 `config/config.json` 复制到本项目 `config/`，`docker compose up -d` 即可。
+**从官方镜像 `sitoi/unicheckin` 迁过来要做什么？**
+先停掉旧容器 —— 本项目容器名也叫 `unicheckin`，不清理会撞名：`docker stop unicheckin && docker rm unicheckin`。然后把原 `config/config.json` 复制到本项目 `config/`，`docker compose up -d` 即可。
 
 **校验显示「无法判定」是不是 cookie 坏了？**
 不一定。网络不通、接口改版、被风控都会这样，面板宁可不确定也不误报失效。这种情况点「立即签到」：**报错了一定有问题，没报错也不能证明有效**。
@@ -218,10 +218,10 @@ python -m panel                    # 默认监听 0.0.0.0:8080
 
 即使引擎导入失败（比如 `requests` 没装好），面板也能起来并给出提示，不会白屏。从源码构建镜像用 `docker compose -f docker-compose.build.yml up -d --build`。
 
-目录：`panel/` 后台（纯标准库）、`dailycheckin/` 引擎、`tools/` 离线自测、`docker/entrypoint.sh` 容器入口。
+目录：`panel/` 后台（纯标准库）、`unicheckin/` 引擎、`tools/` 离线自测、`docker/entrypoint.sh` 容器入口。
 
 ## 致谢与许可
 
-签到引擎最初来自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（作者 Sitoi），
-MIT License，版权归原作者所有。本项目的网页管理后台、微博超话签到、Docker 编排与部署体验
-为新增部分，版权归 zonbar，同样以 MIT 发布。详见 [LICENSE](LICENSE)。
+签到引擎最初改编自 [Sitoi/dailycheckin](https://github.com/Sitoi/dailycheckin)（作者 Sitoi），
+现已重构为独立实现。此项目原作的作者与许可声明在此致谢；
+仓库中现存的代码版权归 zonbar，按 MIT 发布。详见 [LICENSE](LICENSE)。

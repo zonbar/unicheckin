@@ -38,7 +38,7 @@ def route(method: str, pattern: str):
 # 工具
 # --------------------------------------------------------------------------- #
 def engine_version() -> str:
-    path = os.path.join(paths.HOME, "dailycheckin", "__version__.py")
+    path = os.path.join(paths.HOME, "unicheckin", "__version__.py")
     try:
         with open(path, encoding="utf-8") as f:
             m = re.search(r'__version__\s*=\s*["\']([^"\']+)', f.read())
@@ -49,12 +49,12 @@ def engine_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("dailycheckin")
+        return version("unicheckin")
     except Exception:  # noqa: BLE001
         return ""
 
 
-def tail_log(name: str = "dailycheckin.log", lines: int = 300) -> str:
+def tail_log(name: str = "unicheckin.log", lines: int = 300) -> str:
     path = os.path.join(paths.LOG_DIR, os.path.basename(name))
     if not os.path.exists(path):
         return ""
@@ -409,7 +409,7 @@ def h_run_get(h):
 @route("GET", r"/api/logs")
 def h_logs(h):
     query = h.query
-    name = query.get("name", ["dailycheckin.log"])[0]
+    name = query.get("name", ["unicheckin.log"])[0]
     lines = int(query.get("lines", ["400"])[0])
     return {"files": log_files(), "name": os.path.basename(name), "text": tail_log(name, lines)}
 
@@ -485,7 +485,7 @@ HANDLERS = {}
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "dailycheckin-plus-panel/" + PANEL_VERSION
+    server_version = "Uni-Check-in-panel/" + PANEL_VERSION
     protocol_version = "HTTP/1.1"
 
     # ----- 基础 -----

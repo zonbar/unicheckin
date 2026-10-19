@@ -2,7 +2,7 @@
 
 为什么需要这个模块
 ------------------
-dailycheckin 引擎里几乎所有站点都这样解析 cookie：
+unicheckin 引擎里几乎所有站点都这样解析 cookie：
 
     {item.split("=")[0]: item.split("=")[1] for item in cookie.split("; ")}
 

@@ -1,15 +1,15 @@
 services:
-  dailycheckin:
+  unicheckin:
     image: ghcr.io/zonbar/uni-check-in:latest
-    container_name: dailycheckin
+    container_name: unicheckin
     restart: unless-stopped
     ports:
       - 8080:8080
     volumes:
-      - ./config:/dailycheckin/config
-      - ./logs:/dailycheckin/logs
-      - ./data:/dailycheckin/data
-      - ./cron:/dailycheckin/cron
+      - ./config:/unicheckin/config
+      - ./logs:/unicheckin/logs
+      - ./data:/unicheckin/data
+      - ./cron:/unicheckin/cron
     environment:
       - TZ=Asia/Shanghai
       # - PANEL_PORT=8080                 # 容器内监听端口，改这里要同步改上面的映射

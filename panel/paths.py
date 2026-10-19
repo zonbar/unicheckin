@@ -12,7 +12,7 @@ def _env(name: str, default: str) -> str:
 
 # 容器内工作目录，引擎按 `./config/config.json` 找配置，必须保持一致
 # 本地直接 `python -m panel` 时（仓库根目录就是工作目录），自动回落到当前目录
-_DEFAULT_HOME = "/dailycheckin"
+_DEFAULT_HOME = "/unicheckin"
 if not os.path.isdir(_DEFAULT_HOME) and os.path.isdir(os.path.join(os.getcwd(), "panel")):
     _DEFAULT_HOME = os.getcwd()
 

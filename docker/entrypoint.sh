@@ -2,7 +2,7 @@
 # 容器入口：准备目录与配置 -> 装定时任务 -> 同时跑 crond 和网页面板
 set -e
 
-DC_HOME="${DC_HOME:-/dailycheckin}"
+DC_HOME="${DC_HOME:-/unicheckin}"
 export DC_HOME
 CONFIG_DIR="$DC_HOME/config"
 CRON_FILE="$DC_HOME/cron/crontab_list.sh"

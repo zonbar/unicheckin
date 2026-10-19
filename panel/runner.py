@@ -217,7 +217,7 @@ def _finish(run: dict, status: str, exit_code: int | None = None) -> None:
 
 def probe_engine() -> dict:
     """探测引擎是否可用，跑签到前先自检，失败时给出可操作的提示。"""
-    cmd = [sys.executable, "-c", "import dailycheckin, dailycheckin.configs as c; print(len(c.checkin_map))"]
+    cmd = [sys.executable, "-c", "import unicheckin, unicheckin.configs as c; print(len(c.checkin_map))"]
     env = dict(os.environ, PYTHONPATH=paths.HOME + os.pathsep + os.environ.get("PYTHONPATH", ""))
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60, cwd=paths.HOME, env=env)
@@ -237,7 +237,7 @@ def start_run(site_keys: list[str] | None = None) -> dict:
 
 
 def _do_run(run: dict, site_keys: list[str]) -> None:
-    cmd = [sys.executable, "-m", "dailycheckin.main"]
+    cmd = [sys.executable, "-m", "unicheckin.main"]
     if site_keys:
         cmd += ["--include", *site_keys]
     _append(run, f"$ {' '.join(cmd)}")

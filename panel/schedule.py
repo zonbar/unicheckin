@@ -3,11 +3,11 @@
 面板只维护 crontab 文件里的一段**带标记的区块**，其余行原样保留，
 所以用户自己写的其它定时任务不会被覆盖：
 
-    # >>> dailycheckin-plus managed >>>
-    0 9 * * * cd /dailycheckin && dailycheckin >> /dailycheckin/logs/dailycheckin.log 2>&1
-    # <<< dailycheckin-plus managed <<<
+    # >>> Uni-Check-in managed >>>
+    0 9 * * * cd /unicheckin && unicheckin >> /unicheckin/logs/unicheckin.log 2>&1
+    # <<< Uni-Check-in managed <<<
 
-老项目名（dailycheckin-compose）留下的标记照样认，写回时会顺手升级成新标记。
+老项目名（unicheckin-compose）留下的标记照样认，写回时会顺手升级成新标记。
 不这么做的话，老部署里那段「没人认领」的签到任务会和新加的一段并存 ——
 一天跑两遍、通知收两条。
 """
@@ -22,7 +22,7 @@ import subprocess
 from . import paths
 
 # 第一项是当前使用的标记，后面的都是历史名字（只读兼容，写回时统一升级）
-MANAGED_MARKERS = ("dailycheckin-plus", "dailycheckin-compose")
+MANAGED_MARKERS = ("Uni-Check-in", "unicheckin-compose")
 BEGIN = f"# >>> {MANAGED_MARKERS[0]} managed >>>"
 END = f"# <<< {MANAGED_MARKERS[0]} managed <<<"
 
@@ -44,15 +44,15 @@ PRESETS = [
 ]
 
 CRON_FIELD = re.compile(r"^[\d*/,\-]+$")
-# 匹配「真的在调用 dailycheckin 命令」，避免误认 /dailycheckin/logs 这类路径
-CALL_RE = re.compile(r"(?:^|[\s;&|])dailycheckin(?:\s|$)")
+# 匹配「真的在调用 unicheckin 命令」，避免误认 /unicheckin/logs 这类路径
+CALL_RE = re.compile(r"(?:^|[\s;&|])unicheckin(?:\s|$)")
 
 
 def _default_text() -> str:
     """默认 crontab。
 
     cron 不会继承容器的环境变量，所以 TZ / PATH 要在文件里显式声明，
-    否则任务可能按 UTC 时间跑，或者找不到 dailycheckin 命令。
+    否则任务可能按 UTC 时间跑，或者找不到 unicheckin 命令。
     """
     return (
         f"TZ={paths.TZ}\n"
@@ -69,7 +69,7 @@ def _default_text() -> str:
 
 
 def _run_line(cron: str) -> str:
-    return f"{cron} cd {paths.HOME} && dailycheckin >> {paths.LOG_DIR}/dailycheckin.log 2>&1"
+    return f"{cron} cd {paths.HOME} && unicheckin >> {paths.LOG_DIR}/unicheckin.log 2>&1"
 
 
 def read_text() -> str:
@@ -101,7 +101,7 @@ def validate(cron: str) -> str | None:
 
 
 def _is_bare_checkin(line: str) -> bool:
-    """这一行是不是「没被托管标记包起来、但确实在调用 dailycheckin」的旧任务。"""
+    """这一行是不是「没被托管标记包起来、但确实在调用 unicheckin」的旧任务。"""
     text = line.strip()
     if not text or text.startswith("#"):
         return False
@@ -113,7 +113,7 @@ def parse() -> dict:
     """读出当前的定时设置。
 
     没有托管标记时不直接说「未启用」—— 老用户从官方镜像迁移过来，
-    crontab 里本来就只有一行 `0 9 * * * ... dailycheckin ...`，应该被识别出来。
+    crontab 里本来就只有一行 `0 9 * * * ... unicheckin ...`，应该被识别出来。
     """
     text = read_text()
     enabled = False
@@ -150,7 +150,7 @@ def set_schedule(enabled: bool, cron: str) -> dict:
         raise ValueError(err)
     text = read_text()
     body = f"{BEGIN}\n{_run_line(cron) if enabled else '# 定时签到已在面板中关闭'}\n{END}"
-    # 老标记（dailycheckin-compose）也会被匹配到，替换后自然升级成新标记
+    # 老标记（unicheckin-compose）也会被匹配到，替换后自然升级成新标记
     if BLOCK_RE.search(text):
         text = BLOCK_RE.sub(lambda _: body, text, count=1)
     else:
@@ -160,7 +160,7 @@ def set_schedule(enabled: bool, cron: str) -> dict:
         lines = []
         for line in text.splitlines():
             if _is_bare_checkin(line):
-                lines.append(f"# 已由 dailycheckin-plus 面板接管（原文留档）：{line.strip()}")
+                lines.append(f"# 已由 Uni-Check-in 面板接管（原文留档）：{line.strip()}")
             else:
                 lines.append(line)
         text = "\n".join(lines)

@@ -35,12 +35,12 @@ def section(title):
 # --------------------------------------------------------------------------- #
 section("0) import 与站点注册")
 
-from dailycheckin.configs import checkin_map  # noqa: E402
+from unicheckin.configs import checkin_map  # noqa: E402
 
 check("WEIBO 已被引擎自动发现", "WEIBO" in checkin_map, f"实际: {sorted(checkin_map)}")
 check("中文名是「微博超话」", checkin_map.get("WEIBO", ("",))[0] == "微博超话")
 
-from dailycheckin.weibo.main import Weibo  # noqa: E402
+from unicheckin.weibo.main import Weibo  # noqa: E402
 
 # --------------------------------------------------------------------------- #
 section("1) cookie 解析：值里含 = 不能被截断")

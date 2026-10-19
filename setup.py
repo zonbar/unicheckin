@@ -2,10 +2,10 @@ import os
 
 from setuptools import find_packages, setup
 
-# 发行包名沿用 dailycheckin —— 引擎内部 27 处 import 都指向它，
-# 改名要动的地方多、收益低。项目的展示名与仓库地址见 README 与 compose。
-NAME = "dailycheckin"
-FOLDER = "dailycheckin"
+# 引擎包名与项目同名。容器内工作目录（DC_HOME）也用这个名字，
+# 见 Dockerfile 与 docker/entrypoint.sh。
+NAME = "unicheckin"
+FOLDER = "unicheckin"
 DESCRIPTION = "签到聚合 + 网页管理面板"
 EMAIL = "zonbar@users.noreply.github.com"
 AUTHOR = "zonbar"
@@ -74,7 +74,7 @@ setup(
     include_package_data=True,
     license="MIT",
     zip_safe=False,
-    entry_points={"console_scripts": ["dailycheckin = dailycheckin.main:checkin"]},
+    entry_points={"console_scripts": ["unicheckin = unicheckin.main:checkin"]},
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.9",

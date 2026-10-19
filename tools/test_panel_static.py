@@ -342,7 +342,7 @@ check("推送走子进程（面板保持零依赖）",
       "subprocess.run" in auto_src and "notify_push.py" in auto_src)
 check("有推送渠道才发（没配就只记原因）", "NOTICE_KEY_NAMES" in auto_src and "_notice_configured" in auto_src)
 # 标题契约
-with open(os.path.join(ROOT, "dailycheckin", "main.py"), encoding="utf-8") as f:
+with open(os.path.join(ROOT, "unicheckin", "main.py"), encoding="utf-8") as f:
     main_src = f.read()
 check("签到通知标题不带日期", "每日签到 ·" not in main_src and "utc_time[:10]" not in main_src)
 check("运行记录区分「定时校验」与「批量校验」", 'run.auto ? "定时校验"' in js)

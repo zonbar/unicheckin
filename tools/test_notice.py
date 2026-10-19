@@ -11,8 +11,8 @@ import sys
 import types
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MOD = os.path.join(ROOT, "dailycheckin", "utils", "message.py")
-MAIN = os.path.join(ROOT, "dailycheckin", "main.py")
+MOD = os.path.join(ROOT, "unicheckin", "utils", "message.py")
+MAIN = os.path.join(ROOT, "unicheckin", "main.py")
 
 # --------------------------------------------------------------------------- #
 # 假 requests：把所有出网调用记下来
@@ -55,7 +55,7 @@ def check(name, cond, detail=""):
 
 
 # --------------------------------------------------------------------------- #
-# 与 dailycheckin/main.py 里 content_list 的构造方式保持一致
+# 与 unicheckin/main.py 里 content_list 的构造方式保持一致
 # --------------------------------------------------------------------------- #
 TITLE = f"{message.PROJECT_NAME} 每日签到"
 CONTENT = [
@@ -94,12 +94,12 @@ check("项目地址指向本项目", message.PROJECT_URL in body, message.PROJEC
 check("正文里不再出现上游仓库地址", "Sitoi/dailycheckin" not in body, body[-120:])
 
 # 2.1) 项目名：常量、通知标题、企业微信卡片署名都得是新名字
-check("PROJECT_NAME 是 dailycheckin-plus", message.PROJECT_NAME == "dailycheckin-plus", message.PROJECT_NAME)
-check("项目地址是新仓库", message.PROJECT_URL.endswith("/dailycheckin-plus"), message.PROJECT_URL)
-check("兜底标题带项目名", message.NOTICE_TITLE == "dailycheckin-plus 每日签到", message.NOTICE_TITLE)
+check("PROJECT_NAME 是 Uni-Check-in", message.PROJECT_NAME == "Uni-Check-in", message.PROJECT_NAME)
+check("项目地址是新仓库", message.PROJECT_URL.endswith("/Uni-Check-in"), message.PROJECT_URL)
+check("兜底标题带项目名", message.NOTICE_TITLE == "Uni-Check-in 每日签到", message.NOTICE_TITLE)
 check("标题里有项目名", message.PROJECT_NAME in TITLE, TITLE)
 check("正文首行的标题带项目名", body.startswith(f"【{message.PROJECT_NAME}"), repr(body[:60]))
-check("通知里不再出现旧项目名", "dailycheckin-compose" not in body, body[:120])
+check("通知里不再出现旧项目名", "unicheckin-compose" not in body, body[:120])
 
 # 3) 老配置里的 MERGE_PUSH=false 也必须被忽略 —— 它正是「还是两条」的元凶之一
 for legacy in ("false", "0", "no", ""):

@@ -2,8 +2,8 @@
 """crontab 托管区块自测（离线，纯标准库，不碰真实 crontab）。
 
 重点是**改项目名之后老部署不能出问题**：
-面板只维护自己那段带标记的区块，标记从 `dailycheckin-compose managed` 换成了
-`dailycheckin-plus managed`。老用户的 crontab 里还是老标记，
+面板只维护自己那段带标记的区块，标记从 `unicheckin-compose managed` 换成了
+`Uni-Check-in managed`。老用户的 crontab 里还是老标记，
 如果不认它，面板会以为「这段不是我管的」，再追加一段新的签到任务 ——
 结果就是一天跑两遍、TG 收到两条通知。这里把这条路堵死并锁进测试。
 
@@ -56,13 +56,13 @@ def active_calls(text):
     return [
         line
         for line in text.splitlines()
-        if not line.strip().startswith("#") and "dailycheckin " in line and "cd " in line
+        if not line.strip().startswith("#") and "unicheckin " in line and "cd " in line
     ]
 
 
-OLD_BEGIN = "# >>> dailycheckin-compose managed >>>"
-OLD_END = "# <<< dailycheckin-compose managed <<<"
-RUN_LINE = f"0 9 * * * cd {paths.HOME} && dailycheckin >> {paths.LOG_DIR}/dailycheckin.log 2>&1"
+OLD_BEGIN = "# >>> unicheckin-compose managed >>>"
+OLD_END = "# <<< unicheckin-compose managed <<<"
+RUN_LINE = f"0 9 * * * cd {paths.HOME} && unicheckin >> {paths.LOG_DIR}/unicheckin.log 2>&1"
 
 # 老部署的文件：用户自己还有一条别的定时任务，加上老名字的托管区块
 LEGACY = (
@@ -74,9 +74,9 @@ LEGACY = (
 print("=" * 66)
 print("crontab 托管区块：改名后老标记仍要认，且升级成一整段")
 
-# 1) 新标记是 dailycheckin-plus
-check("托管标记用的是新项目名", schedule.BEGIN == "# >>> dailycheckin-plus managed >>>", schedule.BEGIN)
-check("老标记进了兼容清单", "dailycheckin-compose" in schedule.MANAGED_MARKERS, schedule.MANAGED_MARKERS)
+# 1) 新标记是 Uni-Check-in
+check("托管标记用的是新项目名", schedule.BEGIN == "# >>> Uni-Check-in managed >>>", schedule.BEGIN)
+check("老标记进了兼容清单", "unicheckin-compose" in schedule.MANAGED_MARKERS, schedule.MANAGED_MARKERS)
 
 # 2) 文件不存在时，默认内容就是新标记
 if os.path.exists(paths.CRON_PATH):
@@ -96,7 +96,7 @@ back = schedule.set_schedule(True, "30 7 * * *")
 check("保存返回已生效状态", back["enabled"] is True and back["cron"] == "30 7 * * *", back)
 text = read()
 check("升级后只剩一段托管区块", text.count("managed >>>") == 1, text)
-check("老标记已被清掉", "dailycheckin-compose" not in text, text)
+check("老标记已被清掉", "unicheckin-compose" not in text, text)
 check("区块内是新时间", "30 7 * * *" in text, text)
 check("用户自己的任务没被动", "* * * * * echo 用户自己的任务" in text, text)
 check("只保留一个签到调用", len(active_calls(text)) == 1, text)
@@ -125,7 +125,7 @@ schedule.set_schedule(True, "0 9 * * *")
 text = read()
 check("裸调用被包进新的托管区块", text.count("managed >>>") == 1, text)
 check("接管后只剩一个真实签到调用", len(active_calls(text)) == 1, text)
-check("裸调用原文被注释留档", "# 已由 dailycheckin-plus 面板接管" in text, text)
+check("裸调用原文被注释留档", "# 已由 Uni-Check-in 面板接管" in text, text)
 block_body = schedule.BLOCK_RE.search(text).group(1)
 check("唯一的真实调用就在托管区块里", all(l in block_body for l in active_calls(text)), text)
 

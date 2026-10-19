@@ -17,7 +17,7 @@ from . import catalog, paths
 
 _LOCK = threading.RLock()
 
-# 推送通知字段，来自引擎的 dailycheckin/configs.py::notice_map。
+# 推送通知字段，来自引擎的 unicheckin/configs.py::notice_map。
 #
 # 按「渠道」分组：设置页把每一组装进一个方框里，同一种通知方式的字段聚在一起，
 # 不用在一大片输入框里翻找。列表顺序 = 服务端顺序 = 页面显示顺序。

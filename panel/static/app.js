@@ -1,4 +1,4 @@
-/* dailycheckin-plus 签到管理面板 —— 无框架、无构建步骤的纯前端 */
+/* Uni-Check-in 签到管理面板 —— 无框架、无构建步骤的纯前端 */
 (() => {
   "use strict";
 
@@ -320,7 +320,7 @@
     if (!S.state) return;
     const panel = S.state.panel || {};
     const engine = S.state.engine || {};
-    const name = panel.title || "dailycheckin-plus";
+    const name = panel.title || "Uni-Check-in";
     $("panelTitle").textContent = name;
     document.title = `${name} · 签到管理面板`;
     $("panelVersion").textContent = panel.version || "";
@@ -833,10 +833,10 @@
 
   async function loadLogs() {
     try {
-      const r = await api("/logs?lines=500&name=" + encodeURIComponent($("logFile").value || "dailycheckin.log"));
+      const r = await api("/logs?lines=500&name=" + encodeURIComponent($("logFile").value || "unicheckin.log"));
       const sel = $("logFile");
       if (!sel.options.length) {
-        sel.innerHTML = (r.files || []).map((f) => `<option value="${esc(f.name)}">${esc(f.name)}（${Math.round(f.size / 1024)} KB）</option>`).join("") || `<option value="dailycheckin.log">dailycheckin.log</option>`;
+        sel.innerHTML = (r.files || []).map((f) => `<option value="${esc(f.name)}">${esc(f.name)}（${Math.round(f.size / 1024)} KB）</option>`).join("") || `<option value="unicheckin.log">unicheckin.log</option>`;
         sel.value = r.name;
       }
       $("logText").textContent = r.text || "（日志为空）";
@@ -916,9 +916,9 @@
      docker-compose.yml，在 root 家目录直接跑会报「no configuration file provided」，
      家目录里要是有别的 compose 文件更糟 —— 会把那个项目拉起来。
      这行先问容器「当初是用哪个目录的 compose 起我的」，第二行再跳过去更新；
-     两行一起粘贴到终端就行（container_name 固定是 dailycheckin）。 */
+     两行一起粘贴到终端就行（container_name 固定是 unicheckin）。 */
   const UPDATE_CMD =
-    "D=$(docker inspect -f '{{index .Config.Labels \"com.docker.compose.project.working_dir\"}}' dailycheckin)\n" +
+    "D=$(docker inspect -f '{{index .Config.Labels \"com.docker.compose.project.working_dir\"}}' unicheckin)\n" +
     'cd "$D" && docker compose pull && docker compose up -d';
 
   /* 画「项目地址 + 更新状态」。只有设置页最下方的「关于本项目」用得到 ——

@@ -298,7 +298,7 @@ def scan_source() -> dict[str, str]:
 
     from . import paths
 
-    root = os.path.join(paths.HOME, "dailycheckin")
+    root = os.path.join(paths.HOME, "unicheckin")
     if not os.path.isdir(root):
         return {}
     pattern = re.compile(r"class\s+(\w+)\s*\(\s*CheckIn\s*\)\s*:\s*\n(?:\s*\"\"\"[\s\S]*?\"\"\"\s*\n)?\s*name\s*=\s*[\"']([^\"']+)")
@@ -320,11 +320,11 @@ def scan_source() -> dict[str, str]:
 def engine_sites() -> dict[str, str]:
     """从引擎里读出「站点 KEY -> 中文名」，失败时退回源码扫描，再失败返回空字典。
 
-    引擎的 `dailycheckin.configs.checkin_map` 由 `CheckIn.__subclasses__()` 动态生成，
+    引擎的 `unicheckin.configs.checkin_map` 由 `CheckIn.__subclasses__()` 动态生成，
     所以上游新增站点时面板会自动带上，不需要改代码。
     """
     try:
-        from dailycheckin.configs import checkin_map
+        from unicheckin.configs import checkin_map
 
         found = {key.upper(): value[0] for key, value in checkin_map.items()}
         if found:
