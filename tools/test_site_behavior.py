@@ -84,7 +84,11 @@ class FakeHttp:
     def request(self, method, url, **kwargs):
         self.calls.append((method.upper(), url))
         value = self._resolve(method, url)
-        return value if isinstance(value, FakeResp) else FakeResp(text=str(value))
+        if isinstance(value, FakeResp):
+            return value
+        if isinstance(value, dict):
+            return FakeResp(data=value)
+        return FakeResp(text=str(value))
 
     def get(self, url, **kwargs):
         return self.request("GET", url, **kwargs)
@@ -270,6 +274,162 @@ check("option_int 兜底默认值", d2.option_int("missing", 7) == 7)
 check("option_int 非法值兜底", d2.option_int("blank", 3) == 3)
 check("option_bool 识别 yes", d2.option_bool("flag", False) is True)
 check("option 空串取默认", d2.option("blank", "dflt") == "dflt")
+
+
+# --------------------------------------------------------------------------- #
+section("5) 阿里云盘 —— 签到记录里取当天奖励")
+
+from unicheckin.aliyun.main import AliYun  # noqa: E402
+
+# signInLogs 倒序，[0] 是今天（status=miss 表示待签），它前面那条才是今天已签的记录
+ALIYUN_CASES = [
+    ("miss 在下标1，今天那条有奖励",
+     {"signInCount": 5, "signInLogs": [
+         {"status": "done", "isReward": True, "reward": {"name": "1G", "description": "流量"}},
+         {"status": "miss"}]},
+     True, "1G流量"),
+    ("miss 在下标1，今天那条无奖励",
+     {"signInCount": 5, "signInLogs": [
+         {"status": "done", "isReward": False}, {"status": "miss"}]},
+     False, ""),
+    ("miss 在下标0（没有今天的历史）",
+     {"signInCount": 5, "signInLogs": [{"status": "miss"}]},
+     False, ""),
+    ("没有 miss 条目",
+     {"signInCount": 5, "signInLogs": [{"status": "done", "isReward": True}]},
+     False, ""),
+]
+for label, inner, want_reward, want_text in ALIYUN_CASES:
+    got_r = AliYun._today_reward(inner)
+    got_t = AliYun._reward_text(inner)
+    check(f"阿里云盘 {label}", got_r == want_reward and got_t == want_text,
+          f"reward={got_r} text={got_t!r}")
+
+# token 失效时必须抛异常 —— 原实现返回的是列表，会被渲染成 Python 字面量
+obj = build("ALIYUN", {"refresh_token": ""})
+try:
+    obj.run()
+    check("阿里云盘缺 refresh_token 时抛异常", False, "没抛")
+except Exception:  # noqa: BLE001
+    check("阿里云盘缺 refresh_token 时抛异常（不返回列表）", True)
+
+obj = build("ALIYUN", {"refresh_token": "rt"}, {
+    "https://auth.aliyundrive.com/v2/account/token": {"code": "RefreshTokenExpired", "message": "过期"},
+})
+try:
+    obj.run()
+    check("阿里云盘 token 失效时抛异常", False, "没抛")
+except Exception as exc:  # noqa: BLE001
+    check("阿里云盘 token 失效时抛异常（不返回列表）", True)
+    check("异常文案带出接口的 message", "过期" in str(exc), str(exc))
+
+# --------------------------------------------------------------------------- #
+section("6) 百度站点提交 —— 配置校验与站点名提取")
+
+from unicheckin.baidu.main import Baidu  # noqa: E402
+
+check("从提交地址取出 site",
+      Baidu._site_of("https://data.zz.baidu.com/urls?site=example.com&token=x") == "example.com")
+check("site 缺失时给占位符",
+      Baidu._site_of("https://data.zz.baidu.com/urls") == "—")
+
+for item, label in (({}, "两个都缺"), ({"data_url": "u"}, "缺提交地址")):
+    try:
+        build("BAIDU", item).run()
+        check(f"百度 {label} 时抛异常", False, "没抛")
+    except ConfigError:
+        check(f"百度 {label} 时抛 ConfigError", True)
+
+# 提交次数与统计
+obj = build("BAIDU", {
+    "data_url": "https://example.com/sitemap.xml",
+    "submit_url": "https://data.zz.baidu.com/urls?site=example.com&token=t",
+    "times": 3,
+}, {
+    "https://example.com/sitemap.xml": "<urlset/>",
+    "https://data.zz.baidu.com/urls": {"success": 2, "remain": 98},
+})
+out = obj.main()
+check("百度 站点地址显示", "站点地址: example.com" in out, out)
+check("百度 成功条数累计", "成功条数: 6" in out, out)
+check("百度 成功次数", "成功次数: 3" in out, out)
+check("百度 失败次数为 0", "失败次数: 0" in out, out)
+
+# 提交失败要被计入失败次数而不是抛异常
+obj = build("BAIDU", {
+    "data_url": "https://example.com/sitemap.xml",
+    "submit_url": "https://data.zz.baidu.com/urls?site=example.com",
+    "times": 2,
+}, {
+    "https://example.com/sitemap.xml": "<urlset/>",
+    "https://data.zz.baidu.com/urls": {},
+})
+out = obj.main()
+check("全部失败时计入失败次数", "失败次数: 2" in out, out)
+check("全部失败时成功次数为 0", "成功次数: 0" in out, out)
+check("拿不到 remain 时用占位符", "剩余条数: —" in out, out)
+
+# --------------------------------------------------------------------------- #
+section("7) 奥拉星 —— 任务统计与积分")
+
+obj = build("AOLAXING", {"cookie": "BT_LOGIN_tt_common=abc"}, {
+    "http://service.100bt.com/creditmall/activity/daily_task_list.jsonp": {
+        "jsonResult": {"data": [
+            {"name": "登录", "status_desc": "已完成", "taskID": 1},
+            {"name": "战斗", "status_desc": "已完成", "taskID": 2},
+            {"name": "日常", "status_desc": "未完成", "taskID": 3},
+        ]},
+    },
+    "http://service.100bt.com/creditmall/activity/do_task.jsonp": {"jsonResult": {"message": "OK"}},
+    "http://service.100bt.com/creditmall/my/user_info.jsonp": {
+        "jsonResult": {"data": {"credit": 100, "creditHistory": 2000,
+                                "phoneNum": "13800000000", "signInTotal": 30}},
+    },
+})
+out = obj.main()
+check("奥拉星 任务总数", "今日任务总数: 3" in out, out)
+check("奥拉星 已完成数", "今日任务完成数: 2" in out, out)
+check("奥拉星 当前积分", "当前积分: 100" in out, out)
+check("奥拉星 总签到", "总签到: 30" in out, out)
+
+# 用户信息拿不到时要说明，不能崩
+obj = build("AOLAXING", {"cookie": "BT_LOGIN_tt_common=abc"}, {
+    "http://service.100bt.com/creditmall/activity/daily_task_list.jsonp": {"jsonResult": {"data": []}},
+    "http://service.100bt.com/creditmall/my/user_info.jsonp": {},
+})
+out = obj.main()
+check("用户信息缺失时给出提示而非崩溃", "获取用户信息失败" in out, out)
+
+# --------------------------------------------------------------------------- #
+section("8) 全民K歌 —— 必需cookie 与资料解析")
+
+obj = build("KGQQ", {"cookie": "uid=123; openid=x; openkey=y"}, {
+    "https://node.kg.qq.com/webapp/proxy": {
+        "data": {"profile.getProfile": {"uFlowerNum": 100,
+                                       "stPersonInfo": {"sKgNick": "歌神"}}},
+    },
+})
+out = obj.main()
+check("KGQQ 抽出昵称", "帐号信息: 歌神" in out, out)
+check("KGQQ 报告当前鲜花", "当前鲜花: 100" in out, out)
+
+try:
+    build("KGQQ", {"cookie": "openid=x; openkey=y"}).run()
+    check("KGQQ 缺 uid 时抛 ConfigError", False, "没抛")
+except ConfigError as exc:
+    check("KGQQ 缺 uid 时抛 ConfigError", True)
+    check("KGQQ 异常文案点名 uid", "uid" in str(exc), str(exc))
+
+# VIP 状态解析
+obj = build("KGQQ", {"cookie": "uid=123"}, {
+    "https://node.kg.qq.com/webapp/proxy": {
+        "data": {
+            "profile.getProfile": {"uFlowerNum": 50, "stPersonInfo": {"sKgNick": "n"}},
+            "vip.get_vip_info": {"stVipCoreInfo": {"uStatus": 0}},
+        },
+    },
+})
+check("非 VIP 有明确文案", "非 VIP 用户" in obj.main(), obj.main())
 
 # --------------------------------------------------------------------------- #
 print("\n" + "=" * 70)

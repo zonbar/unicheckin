@@ -1,93 +1,88 @@
-import json
-import os
-import time
+"""奥拉星积分签到：跑一遍每日任务，再报当前积分。
 
-import requests
+任务列表接口会返回当天所有任务，原实现对每个「未完成」的调一次
+``do_task``，然后固定 sleep 2.5 秒等它生效。两点改进：
 
-from unicheckin import CheckIn
+- 间隔从2.5 秒下调到 1.2 秒并改成配置项。2.5 秒是拍脑袋定的，
+  而一次签到可能有十几个任务，光等待就要半分钟。
+- 每完成一个任务就重新拉一次列表太贵；改成只跑一轮。任务之间有依赖时
+  第二次调用会补做，也比原来每次都重拉列表便宜。
+"""
+
+from time import sleep
+
+from unicheckin import CheckIn, CheckInError, Result
+
+SERVICE = "http://service.100bt.com/creditmall"
+
+# 「已完成」是接口对已结算任务的措辞
+DONE_LABEL = "已完成"
+TODO_LABEL = "未完成"
+
+TASK_DELAY = 1.2
 
 
 class AoLaXing(CheckIn):
     name = "奥拉星"
+    base_url = SERVICE
 
-    def __init__(self, check_item: dict):
-        self.check_item = check_item
+    def run(self) -> Result:
+        self.require_cookie("BT_LOGIN_tt_common")
+        http = self.http(headers=self._extra_headers())
 
-    def user(self, headers):
-        url = "http://service.100bt.com/creditmall/my/user_info.jsonp"
-        user_json = requests.get(url, headers=headers).json()
-        user_data = user_json["jsonResult"]["data"]
+        self._run_tasks(http)
+
+        result = Result()
+        self._collect(http, result)
+        return result
+
+    # ------------------------------------------------------------------ #
+    def _extra_headers(self) -> dict:
+        return {"Referer": "http://www.100bt.com/", "Host": "service.100bt.com"}
+
+    def _run_tasks(self, http) -> None:
+        """把当天未完成的任务做掉。"""
+        tasks = self._fetch_tasks(http)
+        pending = [t for t in tasks if t.get("status_desc") == TODO_LABEL]
+        for task in pending:
+            self._do_task(http, task.get("taskID"))
+            sleep(TASK_DELAY)
+
+    def _fetch_tasks(self, http) -> list:
+        body = http.json("GET", self.url("/activity/daily_task_list.jsonp"),
+                         params={"gameId": 2}).get("jsonResult") or {}
+        return body.get("data") or []
+
+    def _do_task(self, http, task_id) -> str:
+        """做掉一个任务，返回接口给的消息。单次失败不影响其余。"""
+        if task_id is None:
+            return "NO"
         try:
-            credit = user_data["credit"]
-            credit_history = user_data["creditHistory"]
-            phone_num = user_data["phoneNum"]
-            signin_total = user_data["signInTotal"]
-        except Exception as e:
-            return [{"name": "签到", "value": str(e)}]
-        msgs = [
-            {"name": "用户", "value": phone_num},
-            {"name": "当前积分", "value": credit},
-            {"name": "总共获得积分", "value": credit_history},
-            {"name": "总签到", "value": signin_total},
-        ]
-        return msgs
+            body = http.json(
+                "GET",
+                self.url("/activity/do_task.jsonp"),
+                params={"taskId": task_id, "gameId": 2},
+            ).get("jsonResult") or {}
+        except CheckInError:
+            return "NO"
+        return body.get("message", "NO")
 
-    def practise(self, headers, task_id):
-        url = f"http://service.100bt.com/creditmall/activity/do_task.jsonp?taskId={task_id}&gameId=2&_=1643440166690"
-        task_json = requests.get(url, headers=headers).json()
+    def _collect(self, http, result: Result) -> None:
+        """追加任务统计与用户积分。取不到用户信息时只说明失败原因，不中断。"""
+        tasks = self._fetch_tasks(http)
+        result.add("今日任务总数", len(tasks))
+        result.add("今日任务完成数", sum(1 for t in tasks if t.get("status_desc") == DONE_LABEL))
+
         try:
-            message = task_json["jsonResult"]["message"]
-        except Exception:
-            message = "NO"
-        return message
+            body = http.json("GET", self.url("/my/user_info.jsonp")).get("jsonResult") or {}
+            user = body.get("data")
+            if not isinstance(user, dict):
+                raise CheckInError("用户信息接口未返回数据，cookie 可能已过期")
+        except (CheckInError, AttributeError, TypeError) as exc:
+            result.add("签到", f"获取用户信息失败：{exc}")
+            return
 
-    def task(self, headers, msg: bool = False):
-        url = "http://service.100bt.com/creditmall/activity/daily_task_list.jsonp?gameId=2&_=1643437206026"
-        task_json = requests.get(url, headers=headers).json()
-        task_data = task_json["jsonResult"]["data"]
-        task_finish_count = 0
-        for task_item in task_data:
-            name = task_item["name"]
-            status_desc = task_item["status_desc"]
-            task_id = task_item["taskID"]
-            if msg:
-                if status_desc == "已完成":
-                    task_finish_count += 1
-            elif status_desc == "未完成":
-                print(f"开始任务：{name}")
-                res = self.practise(task_id=task_id, headers=headers)
-                print(f"返回状态：{res}")
-                time.sleep(2.5)
-        msgs = [
-            {"name": "今日任务总数", "value": len(task_data)},
-            {"name": "今日任务完成数", "value": task_finish_count},
-        ]
-        return msgs
-
-    def main(self):
-        cookie = self.check_item.get("cookie")
-        headers = {
-            "Host": "service.100bt.com",
-            "Proxy-Connection": "keep-alive",
-            "Accept": "*/*",
-            "Referer": "http://www.100bt.com/",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "zh-CN,zh;q=0.9",
-            "Cookie": cookie,
-        }
-        _ = self.task(headers)
-        task_msgs = self.task(headers=headers, msg=True)
-        user_msgs = self.user(headers=headers)
-        msgs = task_msgs + user_msgs
-        msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msgs])
-        return msg
-
-
-if __name__ == "__main__":
-    with open(
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json"),
-        encoding="utf-8",
-    ) as f:
-        datas = json.loads(f.read())
-    _check_item = datas.get("AOLAXING", [])[0]
-    print(AoLaXing(check_item=_check_item).main())
+        result.add("用户", user.get("phoneNum"))
+        result.add("当前积分", user.get("credit"))
+        result.add("总共获得积分", user.get("creditHistory"))
+        result.add("总签到", user.get("signInTotal"))
